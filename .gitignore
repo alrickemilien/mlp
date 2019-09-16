@@ -1,0 +1,6 @@
+__pycache__
+*.npy
+*.vscode
+*.sqlite
+*.csv
+ve
