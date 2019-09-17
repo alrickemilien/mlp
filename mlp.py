@@ -2,7 +2,6 @@ import numpy as np
 
 np.random.seed(100)
 
-
 class Layer:
     """
     Represents a layer (hidden or output) in our neural network.
@@ -31,7 +30,11 @@ class Layer:
         :return: The result.
         """
 
+        # print('layer\'s weights', self.weights)
+
         r = np.dot(x, self.weights) + self.bias
+        # print('r', r)
+
         self.last_activation = self._apply_activation(r)
         return self.last_activation
 
@@ -45,17 +48,14 @@ class Layer:
         # In case no activation function was chosen
         if self.activation is None:
             return r
-
         # tanh
         if self.activation == 'tanh':
             return np.tanh(r)
-
         # sigmoid
         if self.activation == 'sigmoid':
             return 1 / (1 + np.exp(-r))
-
         return r
-
+    
     def apply_activation_derivative(self, r):
         """
         Applies the derivative of the activation function (if any).
@@ -68,13 +68,10 @@ class Layer:
 
         if self.activation is None:
             return r
-
         if self.activation == 'tanh':
             return 1 - r ** 2
-
         if self.activation == 'sigmoid':
             return r * (1 - r)
-
         return r
 
 
@@ -102,9 +99,7 @@ class NeuralNetwork:
         """
 
         for layer in self._layers:
-            # print('layer step X', X)
             X = layer.activate(X)
-
         return X
 
     def predict(self, X):
@@ -133,21 +128,21 @@ class NeuralNetwork:
         # Feed forward for the output
         output = self.feed_forward(X)
 
-        # Loop over the layers backward
+        # Loop over the layers backward and generate deltas + errors for each layer
         for i in reversed(range(len(self._layers))):
             layer = self._layers[i]
 
             # If this is the output layer
             if layer == self._layers[-1]:
                 layer.error = y - output
-                # The output = layer.last_activation in this case
+                # The output is layer.last_activation in this case
                 layer.delta = layer.error * layer.apply_activation_derivative(output)
             else:
                 next_layer = self._layers[i + 1]
                 layer.error = np.dot(next_layer.weights, next_layer.delta)
                 layer.delta = layer.error * layer.apply_activation_derivative(layer.last_activation)
 
-        # Update the weights
+        # Update the weights of each layer
         for i in range(len(self._layers)):
             layer = self._layers[i]
             # The input is either the previous layers output or X itself (for the first hidden layer)
@@ -165,7 +160,6 @@ class NeuralNetwork:
         """
 
         mses = []
-
         for i in range(max_epochs):
             for j in range(len(X)):
                 self.backpropagation(X[j], y[j], learning_rate)
