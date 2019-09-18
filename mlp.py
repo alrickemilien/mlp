@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import numpy as np
 
 np.random.seed(100)
@@ -16,6 +18,7 @@ class Layer:
         :param bias: The layer's bias.
         """
 
+        self.n_neurons = n_neurons
         self.weights = weights if weights is not None else np.random.rand(n_input, n_neurons)
         self.activation = activation
         self.bias = bias if bias is not None else np.random.rand(n_neurons)
@@ -170,6 +173,15 @@ class NeuralNetwork:
 
         return mses
 
+    def save(self, out='save.model'):
+        """
+        The format of the save is as following
+        [layer:[activation,neurons,weights,biases]]
+        """
+        def f(layer):
+            return [layer.activation, layer.n_neurons, layer.weights, layer.bias]
+        np.save(out, np.vstack([f(x) for x in self._layers]))
+
     @staticmethod
     def accuracy(y_pred, y_true):
         """
@@ -180,3 +192,4 @@ class NeuralNetwork:
         """
 
         return (y_pred == y_true).mean()
+    

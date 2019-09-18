@@ -1,0 +1,42 @@
+<?xml version="1.0"?>
+
+<root>
+	<component index="true">
+		<name>Index</name>
+		<type>int</type>
+	</component>
+	<component groupBy="true">
+		<name>School</name>
+		<type>string</type>
+		<enum>
+			<value>42_Paris</value>
+			<value>101</value>
+			<value>42_US</value>
+			<value>21_moscow</value>
+		</enum>
+	</component>
+	<component>
+		<name>Algorithms</name>
+		<type>float</type>
+	</component>
+	<component>
+		<name>UNIX</name>
+		<type>float</type>
+	</component>
+	<component>
+		<name>Graphics</name>
+		<type>float</type>
+	</component>
+	<component>
+		<name>Web</name>
+		<type>float</type>
+	</component>
+	<component>
+		<name>AdminSys</name>
+		<type>float</type>
+	</component>
+	<component>
+		<name>Company Experience</name>
+		<type>float</type>
+	</component>
+</root>

@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import sys
 import numpy as np
 
@@ -14,7 +16,7 @@ def scaling(X):
         return (v - stats['mean']) / stats['std']
     return vectorize(f)(X.T).T
 
-def preprocess(data):
+def preprocessing(data):
     """
     Preprocess the dataset
     - Shuffle
