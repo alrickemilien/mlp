@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import sys
 import csv
 import itertools
+import optparse
 from os import path
 
 import matplotlib.pyplot as plt
@@ -85,13 +85,30 @@ def preprocessing(data):
     
     return ret.T
 
+def compare_string_to_indexes(s):
+    splitted = s.split(',')
+
+    return int(splitted[0]), int(splitted[1])
+
 if __name__ == '__main__':
+    #
+    # COMMAND LINE OPTIONS
+    #
+    parser = optparse.OptionParser(usage='usage: %prog [options] [file]')
+
+    options, args = parser.parse_args()
+
+    # Compare
+    parser.add_option('-c', '--compare',
+    action="store", dest="compare",
+    help="(x,y) compares x feature with y feature", default="")
+
     # Extract dataset path - raise on invalid path
-    dataset_path = sys.argv[1] if len(sys.argv) > 1 else 'data.csv'
+    dataset_path = args[0] if len(args) > 0 else 'data.csv'
     if path.isdir(dataset_path) is True:
-        raise Exception(path + ': Is a directory.')
+        raise Exception(dataset_path + ': Is a directory.')
     if path.exists(dataset_path) is False:
-        raise Exception(path + ': No such file or directory.')
+        raise Exception(dataset_path + ': No such file or directory.')
 
     data = preprocessing(list(csv2data(dataset_path)))
 
