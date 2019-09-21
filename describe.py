@@ -7,17 +7,24 @@ from os import path
 import numpy as np
 import pprint as pp
 
-def describe_numeric_vector(data, index):
+import dataconfig as cfg
+
+def describe_numeric_feature(data, index):
     stats = {}
 
     data = np.sort(data)
 
-    # print('data', data)
-
-    stats['empty'] = len(data[np.isnan(data)])
-
-    # Remove empty values
-    data = data[~np.isnan(data)]
+    if (cfg.preprocessing['missing_data'] is False):
+        stats['empty'] = 0        
+    else:
+        unique, counts = np.unique(data, return_counts=True)
+        z = dict(zip(unique, counts))
+        try:
+            stats['empty'] = z[cfg.preprocessing['missing_data']]
+        except KeyError:
+            stats['empty'] = 0        
+            pass
+        data = data[np.where(data != cfg.preprocessing['missing_data'])]
 
     stats['index'] = index
     stats['count'] = len(data)
@@ -27,13 +34,20 @@ def describe_numeric_vector(data, index):
     stats['precision'] = np.sqrt(stats['var'])
     return stats
 
-def describe_classification_vector(y):
+def describe_classification_feature(y):
     stats = {}
 
-    stats['empty'] = len(y[np.char.chararray.isspace(y)])
-
-    # Remove empty values
-    y = y[~np.char.chararray.isspace(y)]
+    if (cfg.preprocessing['missing_data'] is not False):
+        unique, counts = np.unique(y, return_counts=True)
+        z = dict(zip(unique, counts))
+        try:
+            stats['empty'] = z[cfg.preprocessing['missing_data']]
+        except KeyError:
+            stats['empty'] = 0
+            pass
+        y = y[np.where(y != str(cfg.preprocessing['missing_data']))]
+    else:
+        stats['empty'] = 0
 
     classification = np.unique(y)
 
@@ -60,11 +74,11 @@ def describe(data):
     y = data[:,1]
     X = np.delete(data, [0, 1], axis=1).astype(np.float)
 
-    pp.pprint(describe_classification_vector(y))
+    pp.pprint(describe_classification_feature(y))
     
     for (xi, x) in enumerate(X.T):
         # Add 2 at the index because X is the dataset with the two first columns substracted
-        pp.pprint(describe_numeric_vector(x, xi + 2))
+        pp.pprint(describe_numeric_feature(x, xi + 2))
 
 def csv2data(path):
     with open(path, 'r') as f:
