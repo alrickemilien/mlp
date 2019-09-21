@@ -12,12 +12,8 @@ import xml.etree.cElementTree as ET
 
 from sklearn.datasets import make_classification
 
-#
-# FIELD
-#
-
-# This class represents a field column of data
-class Field:
+# This class represents a feature column of data
+class Feature:
 
   # Keep track on groups/classes labels
   classes = []
@@ -44,22 +40,22 @@ class Field:
 
    if bool(x.get('groupBy')) is True:
     for y in values:
-     Field.classes.append(y)
+     Feature.classes.append(y)
 
-   return Field(name=x.find('name').text,
+   return Feature(name=x.find('name').text,
                 dtype=x.find('type').text,
                 groupBy=bool(x.get('groupBy')), 
                 values=values)
 
-  # Find groupBy field among fields list
-  def getGroupByField(l):
+  # Find groupBy feature among features list
+  def getGroupByFeature(l):
    for x in l:
        if x.groupByAttribute is True:
            return x
    return False
 
   def __str__(self):
-   return 'Field[%s] - %s' % (self.dtype, self.name)
+   return 'Feature[%s] - %s' % (self.dtype, self.name)
 
 #
 # GENERATOR
@@ -70,22 +66,22 @@ def generator(configuration_file_path):
 
  root = tree.getroot() 
  
- fields = []
+ features = []
 
  for x in root:
-  fields.append(Field.fromXML(x))
+  features.append(Field.fromXML(x))
 
  # Print the header
  if (bool(options.header)):
-  print(*map(lambda x : x.name, fields), sep=",")
+  print(*map(lambda x : x.name, features), sep=",")
 
  # Build data vectors
  X, y = make_classification(n_samples=int(options.size),
-                            n_features=len(fields) - 2,
+                            n_features=len(features) - 2,
                             n_informative=3, 
                             n_redundant=0,
                             n_repeated=0,
-                            n_classes=len(Field.getGroupByField(fields).values),
+                            n_classes=len(Field.getGroupByField(features).values),
                             n_clusters_per_class=3,
                             class_sep=10.5,
                             flip_y=0)
@@ -111,7 +107,7 @@ if __name__ == '__main__':
 
  options, args = parser.parse_args()
 
- if len(args) < 1:
+ if len(args) == 0:
   sys.exit(USAGE)
 
- generator(sys.argv[1])
+ generator(args[0])
