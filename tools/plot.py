@@ -12,6 +12,8 @@ import matplotlib.pyplot as plt
 import matplotlib.backends.backend_pdf
 import numpy as np
 
+import csv2data
+
 def scatter_plot_matrix_view(fig, axes):
     fig.subplots_adjust(hspace=0.05, wspace=0.05)
 
@@ -85,8 +87,6 @@ def preprocessing(data, i=0, j=1):
         ]
     ]
     """
-    data = np.array(data)
-
     def f(vi, v):
         global classification_index
         global classification
@@ -103,12 +103,6 @@ def preprocessing(data, i=0, j=1):
         return data
     
     return np.vstack([f(xi, x) for (xi, x) in enumerate(data.T)]).T
-
-def csv2data(dataset_path):
-    with open(dataset_path, 'r') as f:
-        reader = csv.reader(f, delimiter=',')
-        for row in reader:
-            yield row
 
 def compare_string_to_indexes(s):
     splitted = s.split(',')
@@ -158,7 +152,7 @@ if __name__ == '__main__':
     if path.exists(dataset_path) is False:
         raise Exception(dataset_path + ': No such file or directory.')
 
-    data = np.array(preprocessing(list(csv2data(dataset_path))))
+    data = np.array(preprocessing(csv2data(dataset_path)))
 
     if (len(options.compare) == 0):
         to_pdf(data)

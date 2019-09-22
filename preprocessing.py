@@ -3,16 +3,17 @@
 import sys
 import numpy as np
 
-from describe import describe_numeric_vector
+from describe import describe_numeric_feature
+import dataconfig as cfg
 
 def scaling(X):
     def vectorize(f):
         def fnv(array) :
-            return np.vstack([f(x, xi) for (xi, x) in enumerate(array)])
+            return np.vstack([_scaling(x, xi) for (xi, x) in enumerate(array)])
         return fnv
 
-    def f(v, index):
-        stats = describe_numeric_vector(v, index)
+    def _scaling(v, index):
+        stats = describe_numeric_feature(v, index)
         return (v - stats['mean']) / stats['std']
     return vectorize(f)(X.T).T
 
@@ -25,9 +26,6 @@ def preprocessing(data):
     - Vectorize
     """
 
-    # To numpy array
-    data = np.array(data)
-
     # Shuffle dataset
     np.random.shuffle(data)
 
@@ -38,11 +36,9 @@ def preprocessing(data):
         ),
         axis=1)
 
-    print('data', data)
-
-    # Take 80% of data set for train and 20% of dataset for test
-    data_train = data[:int(len(data) * 0.8)]
-    data_test = data[int(len(data) * 0.8):]
+    # Take N% of data set for train and (N - 100)% of dataset for test
+    data_train = data[:int(len(data) * cfg.preprocessing['batch_size'])]
+    data_test = data[int(len(data) * cfg.preprocessing['batch_size']):]
 
     # Define dataset of train and dataset of test
     y_train = data_train[:,1]
@@ -65,4 +61,4 @@ def preprocessing(data):
 
     return X_train, y_train, X_test, y_test
 
-sys.modules[__name__] = preprocess
+sys.modules[__name__] = preprocessing

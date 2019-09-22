@@ -26,7 +26,7 @@ class Feature:
     self.vmin = vmin
     self.vmax = vmax
   
-  # Build field from XML
+  # Build Feature from XML
   def fromXML(x):
    groupBy = x.get('groupBy')
    if groupBy is None:
@@ -69,7 +69,7 @@ def generator(configuration_file_path):
  features = []
 
  for x in root:
-  features.append(Field.fromXML(x))
+  features.append(Feature.fromXML(x))
 
  # Print the header
  if (bool(options.header)):
@@ -81,12 +81,12 @@ def generator(configuration_file_path):
                             n_informative=3, 
                             n_redundant=0,
                             n_repeated=0,
-                            n_classes=len(Field.getGroupByField(features).values),
-                            n_clusters_per_class=3,
+                            n_classes=len(Feature.getGroupByFeature(features).values),
+                            n_clusters_per_class=1,
                             class_sep=10.5,
                             flip_y=0)
  for xi in range(len(X)):
-  print('%d,%s,%s' % (xi, Field.classes[y[xi]], ','.join(map(str, X[xi]))))
+  print('%d,%s,%s' % (xi, Feature.classes[y[xi]], ','.join(map(str, X[xi]))))
 
 if __name__ == '__main__':
  USAGE='usage: %prog [options] configuration_file.xml'

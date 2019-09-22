@@ -6,7 +6,8 @@ preprocessing = {
     # 'missing_data': 'none',
     'header': False,
     'classification_index': 2,
-    'features_start_index': 0,
+    'features_start_index': 2,
     'features_end_index': -1,
-    'features_skip_index': []
+    'features_skip_index': [],
+    'batch_size': 0.6,
 }
