@@ -15,7 +15,7 @@ def scaling(X):
     def _scaling(v, index):
         stats = describe_numeric_feature(v, index)
         return (v - stats['mean']) / stats['std']
-    return vectorize(f)(X.T).T
+    return vectorize(_scaling)(X.T).T
 
 def preprocessing(data):
     """

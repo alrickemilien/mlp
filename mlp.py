@@ -19,6 +19,7 @@ class Layer:
         """
 
         self.n_neurons = n_neurons
+        self.n_input = n_input
         self.weights = weights if weights is not None else np.random.rand(n_input, n_neurons)
         self.activation = activation
         self.bias = bias if bias is not None else np.random.rand(n_neurons)
@@ -179,7 +180,7 @@ class NeuralNetwork:
         [layer:[activation,neurons,weights,biases]]
         """
         def f(layer):
-            return [layer.activation, layer.n_neurons, layer.weights, layer.bias]
+            return [layer.activation, layer.n_input, layer.n_neurons, layer.weights, layer.bias]
         np.save(out, np.vstack([f(x) for x in self._layers]))
 
     @staticmethod
