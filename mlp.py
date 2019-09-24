@@ -170,7 +170,7 @@ class NeuralNetwork:
             if i % 10 == 0:
                 mse = np.mean(np.square(y - self.feed_forward(X)))
                 mses.append(mse)
-                print('Epoch: #%s, MSE: %f' % (i, float(mse)))
+                print('Epoch: #%s, MSE: %f, loss: %f' % (i, float(mse), mses[-2] - mses[-1] if i != 0 else 0))
 
         return mses
 
@@ -182,6 +182,12 @@ class NeuralNetwork:
         def f(layer):
             return [layer.activation, layer.n_input, layer.n_neurons, layer.weights, layer.bias]
         np.save(out, np.vstack([f(x) for x in self._layers]))
+
+    def plot(mses):
+        plt.plot(np.arange(len(mses)) * 10, mses)
+        plt.ylabel('MSE')
+        plt.xlabel('epoch')
+        plt.show()
 
     @staticmethod
     def accuracy(y_pred, y_true):
