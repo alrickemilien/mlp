@@ -78,6 +78,7 @@ In this project, the `f) compactness` could be is ignored because its a mix betw
 By removing this feature, the input of the mlp is decreased by one and the complexity is reduced.
 
 # Sources
+https://sebastianraschka.com/Articles/2015_singlelayer_neurons.html
 https://www.dbs.ifi.lmu.de/Lehre/MaschLernen/SS2014/Skript/Perceptron2014.pdf
 https://blog.zhaytam.com/2018/08/15/implement-neural-network-backpropagation/
 
@@ -95,5 +96,8 @@ https://machinelearningmastery.com/how-to-configure-the-number-of-layers-and-nod
 
 https://sebastianraschka.com/faq/docs/logisticregr-neuralnet.html
 
-# What is the impostance of the bias into the MLP ?
+# What is the importance of the bias into the MLP ?
 
+# What is an activation function ?
+
+https://fr.wikipedia.org/wiki/Fonction_d%27activation

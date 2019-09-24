@@ -37,7 +37,7 @@ class Layer:
         # print('layer\'s weights', self.weights)
 
         r = np.dot(x, self.weights) + self.bias
-        # print('r', r)
+
 
         self.last_activation = self._apply_activation(r)
         return self.last_activation
