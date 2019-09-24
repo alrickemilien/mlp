@@ -189,6 +189,21 @@ class NeuralNetwork:
         plt.xlabel('epoch')
         plt.show()
 
+    def evaluate(y_predict, y, lmbd=0, net=False):
+        size = np.size(np.array(y_predict), 0)
+        y_predict = y_predict.reshape(-1, 2)
+        regularization = 0
+        # if lmbd:
+        #     i = 0
+        #     thetas_sum = 0
+        #     while i < net.size - 1:
+        #         thetas_sum += np.sum(net.thetas[i] ** 2)
+        #         i += 1
+        #     regularization = lmbd / (2 * size) * thetas_sum
+        return (((1 / size)
+                * (-1 * y[:, 0].dot(np.log(y_predict[:, 0])) - (1 - y[:, 0]).dot(np.log(1 - y_predict[:, 0]))))
+                + regularization)
+
     @staticmethod
     def accuracy(y_pred, y_true):
         """

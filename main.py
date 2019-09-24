@@ -41,6 +41,8 @@ print('Accuracy', nn.accuracy(
     y_true=[np.where(x == 1)[0][0] for x in y_test]
 ))
 
+print('E=%f' % (nn.evaluate(nn.predict(X_test), [np.where(x == 1)[0][0] for x in y_test])))
+
 nn.plot()
 
 nn.save()
