@@ -81,6 +81,7 @@ By removing this feature, the input of the mlp is decreased by one and the compl
 https://sebastianraschka.com/Articles/2015_singlelayer_neurons.html
 https://www.dbs.ifi.lmu.de/Lehre/MaschLernen/SS2014/Skript/Perceptron2014.pdf
 https://blog.zhaytam.com/2018/08/15/implement-neural-network-backpropagation/
+https://towardsdatascience.com/building-neural-network-from-scratch-9c88535bf8e9
 
 ## Optimisations
 
@@ -101,3 +102,7 @@ https://sebastianraschka.com/faq/docs/logisticregr-neuralnet.html
 # What is an activation function ?
 
 https://fr.wikipedia.org/wiki/Fonction_d%27activation
+
+# Why is the softmax often used as activation function of output layer in MLP ?
+
+https://datascience.stackexchange.com/questions/37357/why-is-the-softmax-function-often-used-as-activation-function-of-output-layer-in

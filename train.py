@@ -25,13 +25,13 @@ nn = NeuralNetwork()
 nn.add_layer(Layer(n_input=X_train.shape[1], n_neurons=3, activation='sigmoid'))
 nn.add_layer(Layer(n_input=3, n_neurons=3, activation='sigmoid'))
 nn.add_layer(Layer(n_input=3, n_neurons=3, activation='sigmoid'))
-nn.add_layer(Layer(n_input=3, n_neurons=y_train.shape[1], activation='sigmoid'))
+nn.add_layer(Layer(n_input=3, n_neurons=y_train.shape[1], activation='softmax'))
 
 print('X_train', X_train)
 print('y_train', y_train)
 
 # Train
-mses = nn.train(X_train, y_train, learning_rate=0.1, max_epochs=70)
+mses = nn.train(X_train, y_train, learning_rate=0.1, max_epochs=50)
 
 # Print weights
 # list(map(lambda x: print('weights', x.weights, 'bias', x.bias), nn._layers))

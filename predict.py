@@ -42,7 +42,7 @@ nn_load = np.load(nn_path, allow_pickle=True)
 nn = NeuralNetwork()
 
 # Load data set
-X_train, y_train, X_test, y_test = preprocessing(csv2data(dataset_path))
+_, _, X_test, y_test = preprocessing(csv2data(dataset_path))
 
 for x in nn_load:
     activation=x[0]
@@ -52,9 +52,11 @@ for x in nn_load:
     bias=x[4]
     nn.add_layer(Layer(n_input=n_input, n_neurons=n_neurons, activation=activation, bias=bias, weights=weights))
 
+y_predict = nn.feed_forward(X_test)
+
 print('Accuracy: %f' % (nn.accuracy(
-    y_pred=nn.predict(X_test),
+    y_pred=np.argmax(y_predict, axis=1),
     y_true=[np.where(x == 1)[0][0] for x in y_test]
 )))
 
-print('E: %f' % (nn.evaluate(nn.feed_forward(X_test), y_test)))
+print('E: %f' % (nn.evaluate(y_predict, y_test)))

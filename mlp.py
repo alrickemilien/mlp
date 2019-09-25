@@ -2,6 +2,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+import sklearn.metrics as skmetrics
 
 class Layer:
     """
@@ -17,11 +18,12 @@ class Layer:
         :param bias: The layer's bias.
         """
 
+        eps = 0.5
         self.n_neurons = n_neurons
         self.n_input = n_input
-        self.weights = weights if weights is not None else np.random.rand(n_input, n_neurons)
+        self.weights = weights if weights is not None else np.random.rand(n_input, n_neurons)  * 2 * eps - eps
         self.activation = activation
-        self.bias = bias if bias is not None else np.random.rand(n_neurons)
+        self.bias = bias if bias is not None else np.random.rand(n_neurons)  * 2 * eps - eps
         self.last_activation = None
         self.error = None
         self.delta = None
@@ -57,6 +59,10 @@ class Layer:
         # sigmoid
         if self.activation == 'sigmoid':
             return 1 / (1 + np.exp(-r))
+        # softamx
+        if self.activation == 'softmax':
+            ex = np.exp(r)
+            return ex / (np.sum(ex, axis=0))
         return r
     
     def apply_activation_derivative(self, r):
@@ -74,6 +80,8 @@ class Layer:
         if self.activation == 'tanh':
             return 1 - r ** 2
         if self.activation == 'sigmoid':
+            return r * (1 - r)
+        if self.activation == 'softmax':
             return r * (1 - r)
         return r
 
@@ -163,15 +171,21 @@ class NeuralNetwork:
         """
 
         mses = []
+        bces = []
         for i in range(max_epochs):
             for j in range(len(X)):
                 self.backpropagation(X[j], y[j], learning_rate)
             if i % 10 == 0:
-                mse = np.mean(np.square(y - self.feed_forward(X)))
+                ff = self.feed_forward(X)
+                mse = np.mean(np.square(y - ff))
                 mses.append(mse)
+                
+                bce = np.mean(np.square(y - ff))
+                bces.append(bce)
+                
                 print('Epoch: #%s, MSE: %f, loss: %f' % (i, float(mse), mses[-2] - mses[-1] if i != 0 else 0))
 
-        return mses
+        return mses, bces
 
     def save(self, out='save.model'):
         """
@@ -189,11 +203,14 @@ class NeuralNetwork:
         plt.show()
 
     def evaluate(self, y_predict, y):
+        print('y_predict', y_predict)
+        return skmetrics.log_loss(y, y_predict)
         size = np.size(y_predict, 0)
-        y_predict = y_predict.reshape(-1, 2)
+        y_predict = y_predict.reshape(-1, 2)[:, 0]
+        y = y[:, 0]
         return ((1 / size)
-            * (-1 * y[:, 0].dot(np.log(y_predict[:, 0]))
-            - (1 - y[:, 0]).dot(np.log(1 - y_predict[:, 0]))))
+            * (-1 * y.dot(np.log(y_predict))
+            - (1 - y).dot(np.log(1 - y_predict))))
 
     @staticmethod
     def accuracy(y_pred, y_true):
