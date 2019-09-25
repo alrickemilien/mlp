@@ -18,7 +18,7 @@ if path.exists(dataset_path) is False:
     raise Exception(dataset_path + ': No such file or directory.')
 
 # Load data set
-X_train, y_train, X_test, y_test = preprocessing(csv2data(dataset_path))
+X_train, y_train = preprocessing(csv2data(dataset_path))
 
 # Build the network
 nn = NeuralNetwork()
@@ -34,15 +34,8 @@ print('y_train', y_train)
 mses = nn.train(X_train, y_train, learning_rate=0.1, max_epochs=70)
 
 # Print weights
-list(map(lambda x: print('weights', x.weights, 'bias', x.bias), nn._layers))
+# list(map(lambda x: print('weights', x.weights, 'bias', x.bias), nn._layers))
 
-print('Accuracy', nn.accuracy(
-    y_pred=nn.predict(X_test),
-    y_true=[np.where(x == 1)[0][0] for x in y_test]
-))
-
-print('E=%f' % (nn.evaluate(nn.predict(X_test), [np.where(x == 1)[0][0] for x in y_test])))
-
-nn.plot()
+nn.plot(mses)
 
 nn.save()

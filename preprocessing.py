@@ -7,14 +7,15 @@ from describe import describe_numeric_feature
 import dataconfig as cfg
 
 def scaling(X):
+    def _scaling(v, index):
+        stats = describe_numeric_feature(v, index)
+        return (v - stats['mean']) / stats['std']
+
     def vectorize(f):
         def fnv(array) :
             return np.vstack([_scaling(x, xi) for (xi, x) in enumerate(array)])
         return fnv
 
-    def _scaling(v, index):
-        stats = describe_numeric_feature(v, index)
-        return (v - stats['mean']) / stats['std']
     return vectorize(_scaling)(X.T).T
 
 def preprocessing(data):
@@ -27,14 +28,14 @@ def preprocessing(data):
     """
 
     # Shuffle dataset
-    np.random.shuffle(data)
+    if (cfg.preprocessing['shuffle_seed']):
+        np.random.seed(cfg.preprocessing['shuffle_seed'])
+        np.random.shuffle(data)
 
-    data = np.concatenate(
-        (
+    data = np.concatenate((
             data[:,(0,1)],
             scaling(np.delete(data, [0, 1], axis=1).astype(np.float))
-        ),
-        axis=1)
+    ), axis=1)
 
     # Take N% of data set for train and (N - 100)% of dataset for test
     data_train = data[:int(len(data) * cfg.preprocessing['batch_size'])]
@@ -49,15 +50,15 @@ def preprocessing(data):
 
     classification = np.unique(data[:,1])
 
-    def f(v, size):
+    def classify(v, size):
         ret = np.zeros(size)
         ret[np.where(classification == v)[0][0]] = 1
         return ret
 
     # Replace 1d array of   ['B', 'M', 'M', 'B', 'B', ...]
     # To a 2d arrayd of     [[0, 1], [1, 0], [1, 0], [0, 1], [0, 1], ...]
-    y_train = np.vstack([f(x, len(classification)) for x in y_train])
-    y_test = np.vstack([f(x, len(classification)) for x in y_test])
+    y_train = np.vstack([classify(x, len(classification)) for x in y_train])
+    y_test = np.vstack([classify(x, len(classification)) for x in y_test])
 
     return X_train, y_train, X_test, y_test
 

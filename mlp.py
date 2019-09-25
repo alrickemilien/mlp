@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
-
-np.random.seed()
+import matplotlib.pyplot as plt
 
 class Layer:
     """
@@ -183,26 +182,18 @@ class NeuralNetwork:
             return [layer.activation, layer.n_input, layer.n_neurons, layer.weights, layer.bias]
         np.save(out, np.vstack([f(x) for x in self._layers]))
 
-    def plot(mses):
+    def plot(self, mses):
         plt.plot(np.arange(len(mses)) * 10, mses)
         plt.ylabel('MSE')
-        plt.xlabel('epoch')
+        plt.xlabel('EPOCH')
         plt.show()
 
-    def evaluate(y_predict, y, lmbd=0, net=False):
-        size = np.size(np.array(y_predict), 0)
+    def evaluate(self, y_predict, y):
+        size = np.size(y_predict, 0)
         y_predict = y_predict.reshape(-1, 2)
-        regularization = 0
-        # if lmbd:
-        #     i = 0
-        #     thetas_sum = 0
-        #     while i < net.size - 1:
-        #         thetas_sum += np.sum(net.thetas[i] ** 2)
-        #         i += 1
-        #     regularization = lmbd / (2 * size) * thetas_sum
-        return (((1 / size)
-                * (-1 * y[:, 0].dot(np.log(y_predict[:, 0])) - (1 - y[:, 0]).dot(np.log(1 - y_predict[:, 0]))))
-                + regularization)
+        return ((1 / size)
+            * (-1 * y[:, 0].dot(np.log(y_predict[:, 0]))
+            - (1 - y[:, 0]).dot(np.log(1 - y_predict[:, 0]))))
 
     @staticmethod
     def accuracy(y_pred, y_true):
@@ -212,6 +203,5 @@ class NeuralNetwork:
         :param y_true: The true labels.
         :return: The calculated accuracy.
         """
-
         return (y_pred == y_true).mean()
     

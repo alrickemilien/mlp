@@ -10,4 +10,5 @@ preprocessing = {
     'features_end_index': -1,
     'features_skip_index': [],
     'batch_size': 0.6,
+    'shuffle_seed': 100,
 }

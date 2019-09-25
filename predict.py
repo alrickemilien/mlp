@@ -18,7 +18,7 @@ if path.exists(dataset_path) is False:
     raise Exception(dataset_path + ': No such file or directory.')
 
 # Extract nn path - raise on invalid path
-nn_path = sys.argv[1] if len(sys.argv) > 2 else 'save.model.npy'
+nn_path = sys.argv[2] if len(sys.argv) > 2 else 'save.model.npy'
 if path.isdir(nn_path) is True:
     raise Exception(nn_path + ': Is a directory.')
 if path.exists(nn_path) is False:
@@ -29,8 +29,6 @@ The format of the save is as following
 [layer:[activation,n_input,neurons,weights,biases]]
 """
 nn_load = np.load(nn_path, allow_pickle=True)
-
-print('nn_load', nn_load)
 
 nn = NeuralNetwork()
 
@@ -45,11 +43,9 @@ for x in  nn_load:
     bias=x[4]
     nn.add_layer(Layer(n_input=n_input, n_neurons=n_neurons, activation=activation, bias=bias, weights=weights))
 
-def f(x):
-    return np.where(x == 1)[0][0]
-
-print('Accuracy', nn.accuracy(
+print('Accuracy: %f' % (nn.accuracy(
     y_pred=nn.predict(X_test),
-    y_true=[f(x) for x in y_test]
-))
+    y_true=[np.where(x == 1)[0][0] for x in y_test]
+)))
 
+print('E: %f' % (nn.evaluate(nn.feed_forward(X_test), y_test)))
