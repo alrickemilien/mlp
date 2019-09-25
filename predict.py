@@ -1,24 +1,33 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import sys
 from os import path
 import numpy as np
+import optparse
 
 import preprocessing
+import tools.csv2data as csv2data
 from mlp import NeuralNetwork, Layer
 
-import tools.csv2data as csv2data
+# COMMAND LINE OPTIONS
+parser = optparse.OptionParser(usage='usage: %prog [options] file')
+
+# Compare
+parser.add_option('-m', '--model',
+action="store", dest="model",
+help="specific model to use", default="save.model.npy")
+
+options, args = parser.parse_args()
 
 # Extract dataset path - raise on invalid path
-dataset_path = sys.argv[1] if len(sys.argv) > 1 else 'data.csv'
+dataset_path = args[0] if len(args) > 0 else 'data.csv'
 if path.isdir(dataset_path) is True:
     raise Exception(dataset_path + ': Is a directory.')
 if path.exists(dataset_path) is False:
     raise Exception(dataset_path + ': No such file or directory.')
 
 # Extract nn path - raise on invalid path
-nn_path = sys.argv[2] if len(sys.argv) > 2 else 'save.model.npy'
+nn_path = options.model
 if path.isdir(nn_path) is True:
     raise Exception(nn_path + ': Is a directory.')
 if path.exists(nn_path) is False:
@@ -35,7 +44,7 @@ nn = NeuralNetwork()
 # Load data set
 X_train, y_train, X_test, y_test = preprocessing(csv2data(dataset_path))
 
-for x in  nn_load:
+for x in nn_load:
     activation=x[0]
     n_input=x[1]
     n_neurons=x[2]

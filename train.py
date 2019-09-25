@@ -18,7 +18,7 @@ if path.exists(dataset_path) is False:
     raise Exception(dataset_path + ': No such file or directory.')
 
 # Load data set
-X_train, y_train = preprocessing(csv2data(dataset_path))
+X_train, y_train, _, _ = preprocessing(csv2data(dataset_path))
 
 # Build the network
 nn = NeuralNetwork()

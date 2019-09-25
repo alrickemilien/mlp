@@ -18,6 +18,12 @@ def scaling(X):
 
     return vectorize(_scaling)(X.T).T
 
+def shuffle_along_axis(a, axis):
+    if (cfg.preprocessing['shuffle_seed'] > 0):
+        np.random.seed(cfg.preprocessing['shuffle_seed'])
+    idx = np.random.rand(*a.shape).argsort(axis=axis)
+    return np.take_along_axis(a, idx, axis=axis)
+
 def preprocessing(data):
     """
     Preprocess the dataset
@@ -28,13 +34,11 @@ def preprocessing(data):
     """
 
     # Shuffle dataset
-    if (cfg.preprocessing['shuffle_seed']):
-        np.random.seed(cfg.preprocessing['shuffle_seed'])
-        np.random.shuffle(data)
+    data = shuffle_along_axis(data, 0)
 
     data = np.concatenate((
-            data[:,(0,1)],
-            scaling(np.delete(data, [0, 1], axis=1).astype(np.float))
+        data[:,(0,1)],
+        scaling(np.delete(data, [0, 1], axis=1).astype(np.float))
     ), axis=1)
 
     # Take N% of data set for train and (N - 100)% of dataset for test

@@ -56,11 +56,8 @@ def describe_classification_feature(y, index):
 
     def vectorize(f):
         def fnv(array) :
-            return [f(x) for x in array]
+            return [np.where(classification == v)[0][0] for x in array]
         return fnv
-
-    def f(v):
-        return np.where(classification == v)[0][0]
 
     y = vectorize(f)(y)
 
