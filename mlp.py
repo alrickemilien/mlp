@@ -39,7 +39,6 @@ class Layer:
 
         r = np.dot(x, self.weights) + self.bias
 
-
         self.last_activation = self._apply_activation(r)
         return self.last_activation
 
@@ -139,6 +138,9 @@ class NeuralNetwork:
         # Feed forward for the output
         output = self.feed_forward(X)
 
+        # print('backpropagation', X)
+        # print('OUTPUT', output)
+
         # Loop over the layers backward and generate deltas + errors for each layer
         for i in reversed(range(len(self._layers))):
             layer = self._layers[i]
@@ -177,14 +179,11 @@ class NeuralNetwork:
                 self.backpropagation(X[j], y[j], learning_rate)
             if i % 10 == 0:
                 ff = self.feed_forward(X)
-                mse = np.mean(np.square(y - ff))
+                mse = np.mean(np.square([np.where(x == 1)[0][0] for x in y] - np.argmax(ff, axis=1)))
                 mses.append(mse)
-                
-                bce = np.mean(np.square(y - ff))
+                bce = np.mean(skmetrics.log_loss(y, ff))
                 bces.append(bce)
-                
-                print('Epoch: #%s, MSE: %f, loss: %f' % (i, float(mse), mses[-2] - mses[-1] if i != 0 else 0))
-
+                print('Epoch: #%s, MSE: %f, BCE: %f' % (i, float(mse), float(bce)))
         return mses, bces
 
     def save(self, out='save.model'):
@@ -203,7 +202,7 @@ class NeuralNetwork:
         plt.show()
 
     def evaluate(self, y_predict, y):
-        print('y_predict', y_predict)
+        # print('y_predict', y_predict)
         return skmetrics.log_loss(y, y_predict)
         size = np.size(y_predict, 0)
         y_predict = y_predict.reshape(-1, 2)[:, 0]

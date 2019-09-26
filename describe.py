@@ -54,12 +54,7 @@ def describe_classification_feature(y, index):
 
     classification = np.unique(y)
 
-    def vectorize(f):
-        def fnv(array) :
-            return [np.where(classification == v)[0][0] for x in array]
-        return fnv
-
-    y = vectorize(f)(y)
+    y = [np.where(classification == v)[0][0] for x in y]
 
     stats['index'] = index
     stats['count'] = len(y)

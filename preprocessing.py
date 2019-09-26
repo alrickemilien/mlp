@@ -41,9 +41,13 @@ def preprocessing(data):
         scaling(np.delete(data, [0, 1], axis=1).astype(np.float))
     ), axis=1)
 
-    # Take N% of data set for train and (N - 100)% of dataset for test
-    data_train = data[:int(len(data) * cfg.preprocessing['batch_size'])]
-    data_test = data[int(len(data) * cfg.preprocessing['batch_size']):]
+    if (cfg.preprocessing['batch_size'] == 1):
+        data_train = data
+        data_test = data
+    else:
+        # Take N% of data set for train and (N - 100)% of dataset for test
+        data_train = data[:int(len(data) * cfg.preprocessing['batch_size'])]
+        data_test = data[int(len(data) * cfg.preprocessing['batch_size']):]
 
     # Define dataset of train and dataset of test
     y_train = data_train[:,1]
