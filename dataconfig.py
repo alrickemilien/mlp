@@ -10,6 +10,7 @@ preprocessing = {
     'features_end_index': -1,
     'batch_size': 1,
     'shuffle_seed': 42,
+    'weights_seed': 42,
 
     # Skipping ID, Class, (7,17,27) is the f) feature that is a mix of two other features
     'to_skip': [7,17,27],

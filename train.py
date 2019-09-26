@@ -9,6 +9,7 @@ import preprocessing
 from mlp import NeuralNetwork, Layer
 import tools.csv2data as csv2data
 import matplotlib.pyplot as plt
+import dataconfig as cfg
 
 # COMMAND LINE OPTIONS
 parser = optparse.OptionParser(usage='usage: %prog [options] file')
@@ -32,13 +33,14 @@ X_train, y_train, _, _ = preprocessing(csv2data(dataset_path))
 
 # Build the network
 nn = NeuralNetwork()
-nn.add_layer(Layer(n_input=X_train.shape[1], n_neurons=3, activation='sigmoid'))
-nn.add_layer(Layer(n_input=3, n_neurons=3, activation='sigmoid'))
-nn.add_layer(Layer(n_input=3, n_neurons=3, activation='sigmoid'))
-nn.add_layer(Layer(n_input=3, n_neurons=y_train.shape[1], activation='softmax'))
+seed = cfg.preprocessing['weights_seed']
+nn.add_layer(Layer(n_input=X_train.shape[1], n_neurons=3, activation='sigmoid', seed=seed))
+nn.add_layer(Layer(n_input=3, n_neurons=3, activation='sigmoid', seed=seed))
+nn.add_layer(Layer(n_input=3, n_neurons=3, activation='sigmoid', seed=seed))
+nn.add_layer(Layer(n_input=3, n_neurons=y_train.shape[1], activation='softmax', seed=seed))
 
 # Train
-mses, _ = nn.train(X_train, y_train, learning_rate=0.5, max_epochs=100)
+mses, _ = nn.train(X_train, y_train, learning_rate=0.2, max_epochs=120)
 
 if (options.plot is True):
     nn.plot(mses)

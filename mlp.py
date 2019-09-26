@@ -9,7 +9,7 @@ class Layer:
     Represents a layer (hidden or output) in our neural network.
     """
 
-    def __init__(self, n_input, n_neurons, activation=None, weights=None, bias=None):
+    def __init__(self, n_input, n_neurons, activation=None, weights=None, bias=None, seed=0):
         """
         :param int n_input: The input size (coming from the input layer or a previous hidden layer)
         :param int n_neurons: The number of neurons in this layer.
@@ -17,6 +17,8 @@ class Layer:
         :param weights: The layer's weights.
         :param bias: The layer's bias.
         """
+
+        np.random.seed(seed)
 
         eps = 0.5
         self.n_neurons = n_neurons
