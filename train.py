@@ -35,12 +35,12 @@ X_train, y_train, _, _ = preprocessing(csv2data(dataset_path))
 nn = NeuralNetwork()
 seed = cfg.preprocessing['weights_seed']
 nn.add_layer(Layer(n_input=X_train.shape[1], n_neurons=3, activation='sigmoid', seed=seed))
-nn.add_layer(Layer(n_input=3, n_neurons=3, activation='sigmoid', seed=seed))
-nn.add_layer(Layer(n_input=3, n_neurons=3, activation='sigmoid', seed=seed))
-nn.add_layer(Layer(n_input=3, n_neurons=y_train.shape[1], activation='softmax', seed=seed))
+nn.add_layer(Layer(n_input=3, n_neurons=3, activation='sigmoid', seed=0))
+nn.add_layer(Layer(n_input=3, n_neurons=3, activation='sigmoid', seed=0))
+nn.add_layer(Layer(n_input=3, n_neurons=y_train.shape[1], activation='softmax', seed=0))
 
 # Train
-mses, _ = nn.train(X_train, y_train, learning_rate=0.2, max_epochs=120)
+mses, _ = nn.train(X_train, y_train, learning_rate=cfg.preprocessing['learning_rate'], max_epochs=cfg.preprocessing['epoch'])
 
 if (options.plot is True):
     nn.plot(mses)
