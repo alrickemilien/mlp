@@ -115,5 +115,7 @@ https://eli.thegreenplace.net/2016/the-softmax-function-and-its-derivative/
 # MSE and softmax
 https://stats.stackexchange.com/questions/153285/derivative-of-softmax-and-squared-error
 
+===> check this https://peterroelants.github.io/posts/cross-entropy-softmax/
+
 # MSE and sigmoid
 http://www.1-4-5.net/~dmm/ml/mse.pdf
