@@ -52,7 +52,7 @@ for x in nn_load:
     bias=x[4]
     nn.add_layer(Layer(n_input=n_input, n_neurons=n_neurons, activation=activation, bias=bias, weights=weights))
 
-y_predict = nn.feed_forward(X_test)
+y_predict = np.vstack([nn.feed_forward(x) for x in X_test])
 
 print('Accuracy: %f' % (nn.accuracy(
     y_pred=np.argmax(y_predict, axis=1),

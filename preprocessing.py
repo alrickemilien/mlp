@@ -6,7 +6,7 @@ import numpy as np
 from describe import describe_numeric_feature
 import dataconfig as cfg
 
-def scaling(X):
+def scale(X):
     def _scaling(v, index):
         stats = describe_numeric_feature(v, index)
         return (v - stats['mean']) / stats['std']
@@ -24,6 +24,21 @@ def shuffle_along_axis(a, axis):
     idx = np.random.rand(*a.shape).argsort(axis=axis)
     return np.take_along_axis(a, idx, axis=axis)
 
+def split(data, batch_percentage=1):
+    if (batch_percentage == 1):
+        return data, data
+    # Take N% of data set for train and (N - 100)% of dataset for test
+    data_train = data[:int(len(data) * batch_percentage)]
+    data_test = data[int(len(data) * batch_percentage):]
+    return data_train, data_test
+
+
+def classify(classification, v):
+    size = len(classification)
+    ret = np.zeros(size)
+    ret[np.where(classification == v)[0][0]] = 1
+    return ret
+
 def preprocessing(data):
     """
     Preprocess the dataset
@@ -38,12 +53,10 @@ def preprocessing(data):
 
     data = np.concatenate((
         data[:,(0,1)],
-        scaling(np.delete(data, [0, 1], axis=1).astype(np.float))
+        scale(np.delete(data, [0, 1], axis=1).astype(np.float))
     ), axis=1)
 
-    # Take N% of data set for train and (N - 100)% of dataset for test
-    data_train = data[:int(len(data) * cfg.preprocessing['batch_size'])]
-    data_test = data[int(len(data) * cfg.preprocessing['batch_size']):]
+    data_train, data_test = split(data, cfg.preprocessing['batch_size'])
 
     # Define dataset of train and dataset of test
     y_train = data_train[:,1]
@@ -54,15 +67,10 @@ def preprocessing(data):
 
     classification = np.unique(data[:,1])
 
-    def classify(v, size):
-        ret = np.zeros(size)
-        ret[np.where(classification == v)[0][0]] = 1
-        return ret
-
     # Replace 1d array of   ['B', 'M', 'M', 'B', 'B', ...]
     # To a 2d arrayd of     [[0, 1], [1, 0], [1, 0], [0, 1], [0, 1], ...]
-    y_train = np.vstack([classify(x, len(classification)) for x in y_train])
-    y_test = np.vstack([classify(x, len(classification)) for x in y_test])
+    y_train = np.vstack([classify(classification, x) for x in y_train])
+    y_test = np.vstack([classify(classification, x) for x in y_test])
 
     return X_train, y_train, X_test, y_test
 

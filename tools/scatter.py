@@ -128,7 +128,7 @@ def to_pdf(data):
     for i in range(2, l):
         for j in range(i, l):
             if j <= i: continue
-            print('Plotting column' + str(i) + ' with column ' + str(j))
+            print('Plotting column ' + str(i) + ' with column ' + str(j))
             fig = scatterplot_matrix(cut(data, i, j), [str(i), str(j)])
             pdf.savefig(fig)
             plt.close(fig)

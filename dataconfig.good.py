@@ -6,8 +6,8 @@ preprocessing = {
     'features_end_index': -1,
     'batch_size': 0.8,
     'shuffle_seed': 10001,
-    'weights_seed': 10008,
-    'epoch': 87,
-    'learning_rate': 0.13,
+    'weights_seed': 10009,
+    'epoch': 80,
+    'learning_rate': 0.01,
     'to_skip': [7, 17, 27],
 }
