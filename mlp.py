@@ -62,7 +62,7 @@ class Layer:
         # softamx
         if self.activation == 'softmax':
             ex = np.exp(r)
-            return ex / (np.sum(ex, axis=0))
+            return ex / ex.sum(axis=0, keepdims=True)
         return r
     
     def apply_activation_derivative(self, r):

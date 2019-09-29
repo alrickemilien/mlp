@@ -82,6 +82,7 @@ https://sebastianraschka.com/Articles/2015_singlelayer_neurons.html
 https://www.dbs.ifi.lmu.de/Lehre/MaschLernen/SS2014/Skript/Perceptron2014.pdf
 https://blog.zhaytam.com/2018/08/15/implement-neural-network-backpropagation/
 https://towardsdatascience.com/building-neural-network-from-scratch-9c88535bf8e9
+http://www.cristiandima.com/neural-networks-from-scratch-in-python/
 
 ## Optimisations
 
