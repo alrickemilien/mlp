@@ -62,11 +62,19 @@ class Layer:
             return 1 / (1 + np.exp(-r))
         # softamx
         if self.activation == 'softmax':
-            ex = np.exp(r)
-            return ex / ex.sum(axis=0, keepdims=True)
+            return self.softmax(r)
         return r
     
-    def apply_activation_derivative(self, r):
+    @staticmethod
+    def softmax(r):
+        ex = np.exp(r)
+        return ex / ex.sum(axis=0, keepdims=True)
+
+    @staticmethod
+    def kronecker_delta(i, j):
+        return 0 if i != j else 1
+
+    def apply_activation_derivative_mse(self, r):
         """
         Applies the derivative of the activation function (if any).
         :param r: The normal value.
@@ -83,9 +91,12 @@ class Layer:
         if self.activation == 'sigmoid':
             return r * (1 - r)
         if self.activation == 'softmax':
-            return r * (1 - r)
-        return r
+            def mse_softmax_derivate(xi):
+                return [r[xi] * (r[xi] - self.kronecker_delta(xi, yi)) for (yi, _) in enumerate(r)]
 
+            m = np.vstack([mse_softmax_derivate(xi) for (xi, _) in enumerate(r)])
+            return np.dot(m, r)
+        return r
 
 class NeuralNetwork:
     """
@@ -141,7 +152,6 @@ class NeuralNetwork:
         output = self.feed_forward(X)
 
         # print('backpropagation', X)
-        # print('OUTPUT', output)
 
         # Loop over the layers backward and generate deltas + errors for each layer
         for i in reversed(range(len(self._layers))):
@@ -149,20 +159,27 @@ class NeuralNetwork:
 
             # If this is the output layer
             if layer == self._layers[-1]:
-                layer.error = y - output
-                # The output is layer.last_activation in this case
-                layer.delta = layer.error * layer.apply_activation_derivative(output)
+                p_a = layer.softmax(output)
+
+                def err(xi, x, real):
+                    return [
+                        2 * np.sum((x - real) * x * (layer.kronecker_delta(xi, yi) - y)) for (yi, y) in enumerate(p_a)
+                    ]
+
+                layer.delta = np.dot(np.vstack([err(xi, x, y[xi]) for (xi, x) in enumerate(p_a)]), output)
             else:
                 next_layer = self._layers[i + 1]
                 layer.error = np.dot(next_layer.weights, next_layer.delta)
-                layer.delta = layer.error * layer.apply_activation_derivative(layer.last_activation)
-
-        # Update the weights of each layer
+                layer.delta = layer.error * layer.apply_activation_derivative_mse(layer.last_activation)
+        
+        # Gradient descent part
         for i in range(len(self._layers)):
             layer = self._layers[i]
+
             # The input is either the previous layers output or X itself (for the first hidden layer)
             input_to_use = np.atleast_2d(X if i == 0 else self._layers[i - 1].last_activation)
             layer.weights += layer.delta * input_to_use.T * learning_rate
+            layer.bias += layer.delta * learning_rate
 
     def train(self, X, y, learning_rate, max_epochs):
         """
@@ -175,18 +192,28 @@ class NeuralNetwork:
         """
 
         mses = []
-        bces = []
+        cees = []
         for i in range(max_epochs):
             for j in range(len(X)):
                 self.backpropagation(X[j], y[j], learning_rate)
             if i % 10 == 0:
                 ff = self.feed_forward(X)
-                mse = np.mean(np.square([np.where(x == 1)[0][0] for x in y] - np.argmax(ff, axis=1)))
+                mse = self.mean_squarred_error(ff, y)
                 mses.append(mse)
-                bce = np.mean(skmetrics.log_loss(y, ff))
-                bces.append(bce)
-                print('Epoch: #%s, MSE: %f, BCE: %f' % (i, float(mse), float(bce)))
-        return mses, bces
+                cee = self.cross_entropy_error(ff, y)
+                cees.append(cee)
+                print('Epoch: #%s, MSE: %f, CEE: %f' % (i, float(mse), float(cee)))
+        return mses, cees
+
+    @staticmethod
+    def mean_squarred_error(a, y):
+        """ This is the log loss function """
+        return np.mean(np.square([np.where(x == 1)[0][0] for x in y] - np.argmax(a, axis=1)))
+    
+    @staticmethod
+    def cross_entropy_error(a, y):
+        """ This is the log loss function """
+        return np.sum(np.nan_to_num(-y*np.log(a)-(1-y)*np.log(1-a)))
 
     def save(self, out='save.model'):
         """
