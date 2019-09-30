@@ -1,3 +1,16 @@
+# Let's intall
+
+### Required:
+
+- python3.x
+- virtualenv
+
+```
+virtualenv ve -p python3
+source ve/bin/activate
+pip3 install -r requirements.txt
+```
+
 # Data
 
 Fetch data [here](https://projects.intra.42.fr/uploads/document/document/464/data.csv)

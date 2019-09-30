@@ -33,6 +33,10 @@ if path.exists(dataset_path) is False:
     raise Exception(dataset_path + ': No such file or directory.')
 
 # Extract configuration
+if path.isdir(options.configure) is True:
+    raise Exception(options.configure + ': Is a directory.')
+if path.exists(options.configure) is False:
+    raise Exception(options.configure + ': No such file or directory.')
 with open(options.configure, 'r') as yfile:
     cfg = yaml.load(yfile, Loader=yaml.BaseLoader)
 
