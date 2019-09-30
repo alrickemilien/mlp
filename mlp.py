@@ -87,10 +87,6 @@ class Layer:
         ex = np.exp(r)
         return ex / ex.sum(axis=1, keepdims=True)
 
-    @staticmethod
-    def kronecker_delta(i, j):
-        return 0 if i != j else 1
-
 class NeuralNetwork:
     """
     Represents a neural network.
@@ -133,16 +129,19 @@ class NeuralNetwork:
         # Multiple rows
         return np.argmax(ff, axis=1)
 
+    @staticmethod
+    def kronecker_delta(i, j):
+        return 0 if i != j else 1
     
     def apply_error_derivate(self, output, y):
         if self.error == 'cee':
             return output - y
         if self.error == 'mse':
             def mse_softmax_derivate(xi):
-                return [r[xi] * (r[xi] - self.kronecker_delta(xi, yi)) for (yi, _) in enumerate(r)]
+                return [output[xi] * (output[xi] - self.kronecker_delta(xi, yi)) for (yi, _) in enumerate(output)]
 
-            m = np.vstack([mse_softmax_derivate(xi) for (xi, _) in enumerate(r)])
-            return np.dot(m, r)
+            m = np.vstack([mse_softmax_derivate(xi) for (xi, _) in enumerate(output)])
+            return output.dot(m.T)
         return output - y
 
     def backpropagation(self, X, y, learning_rate):
@@ -209,14 +208,11 @@ class NeuralNetwork:
 
     @staticmethod
     def mean_squarred_error(a, y):
-        """ This is the log loss function """
-        # print('np.argmax(a, axis=1)', np.argmax(a, axis=1))
-        # print('[np.where(x == 1)[0][0] for x in y]', [np.where(x == 1)[0][0] for x in y])
-
-        return np.mean(np.square([np.where(x == 1)[0][0] for x in y] - np.argmax(a, axis=1)))
+        return np.mean(np.square(np.array([np.where(x == 1)[0][0] for x in y]) - np.argmax(a, axis=1)))
     
     @staticmethod
     def cross_entropy_error(a, y):
+        return skmetrics.log_loss(y, a)
         """ This is the log loss function """
         return np.sum(-y * np.log(a))
 
@@ -242,17 +238,19 @@ class NeuralNetwork:
 
         plt.show()
 
-
-    def evaluate(self, y_predict, y):
-        return skmetrics.log_loss(y, y_predict) / len(y)
+    @staticmethod
+    def evaluate(y_predict, y):
+        return skmetrics.log_loss(y, y_predict)
 
     @staticmethod
-    def accuracy(y_pred, y_true):
+    def accuracy(a, y):
         """
         Calculates the accuracy between the predicted labels and true labels.
         :param y_pred: The predicted labels.
         :param y_true: The true labels.
         :return: The calculated accuracy.
         """
-        return (y_pred == y_true).mean()
+        pred = np.argmax(a, axis=1)
+        truth = np.array([np.where(x == 1)[0][0] for x in y])
+        return (pred == truth).mean()
     

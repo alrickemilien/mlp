@@ -25,6 +25,10 @@ parser.add_option('-c', '--configure',
 action="store", dest="configure",
 help="specific configure file path", default="dataconfig.yml")
 
+parser.add_option('-e', '--error',
+action="store", dest="error",
+help="error function to use for training", default="cee")
+
 options, args = parser.parse_args()
 
 # Extract dataset path - raise on invalid path
@@ -46,12 +50,13 @@ with open(options.configure, 'r') as yfile:
 X_train, y_train, _, _ = preprocessing(cfg, csv2data(dataset_path))
 
 # Build the network
-nn = NeuralNetwork()
+nn = NeuralNetwork(error=options.error)
 w_seed = int(cfg['weights_seed'])
 b_seed = int(cfg['bias_seed'])
-nn.add_layer(Layer(n_input=X_train.shape[1], n_neurons=5, activation='sigmoid', weights_seed=w_seed, bias_seed=b_seed))
-nn.add_layer(Layer(n_input=5, n_neurons=5, activation='sigmoid', weights_seed=w_seed, bias_seed=b_seed))
-nn.add_layer(Layer(n_input=5, n_neurons=3, activation='sigmoid', weights_seed=w_seed, bias_seed=b_seed))
+nn.add_layer(Layer(n_input=X_train.shape[1], n_neurons=10, activation='sigmoid', weights_seed=w_seed, bias_seed=b_seed))
+nn.add_layer(Layer(n_input=10, n_neurons=10, activation='sigmoid', weights_seed=w_seed, bias_seed=b_seed))
+nn.add_layer(Layer(n_input=10, n_neurons=6, activation='sigmoid', weights_seed=w_seed, bias_seed=b_seed))
+nn.add_layer(Layer(n_input=6, n_neurons=3, activation='sigmoid', weights_seed=w_seed, bias_seed=b_seed))
 nn.add_layer(Layer(n_input=3, n_neurons=y_train.shape[1], activation='softmax', weights_seed=w_seed, bias_seed=b_seed))
 
 # Train
