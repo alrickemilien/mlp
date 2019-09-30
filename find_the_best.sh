@@ -1,6 +1,6 @@
 #!/bin/bash
 
-epoch=80
+epoch=87
 bce=-1
 shuffle_seed=10001
 

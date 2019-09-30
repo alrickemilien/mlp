@@ -31,7 +31,6 @@ def writeToCsv(path, content, labels):
         writer = csv.writer(fd)
         if labels is not None:
             content.insert(0, labels)
-        print('content', content)
         writer.writerows(content)
 
 def splitList(content, cut):

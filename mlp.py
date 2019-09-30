@@ -30,7 +30,7 @@ class Layer:
         self.error = None
         self.delta = None
 
-    def activate(self, x):
+    def activate(self, A):
         """
         Calculates the dot product of this layer.
         :param x: The input.
@@ -39,7 +39,10 @@ class Layer:
 
         # print('layer\'s weights', self.weights)
 
-        r = np.dot(x, self.weights) + self.bias
+        r = A.dot(self.weights) + self.bias
+
+        # print('r', r)
+        # print('self.bias', self.bias)
 
         self.last_activation = self._apply_activation(r)
         return self.last_activation
@@ -68,7 +71,7 @@ class Layer:
     @staticmethod
     def softmax(r):
         ex = np.exp(r)
-        return ex / ex.sum(axis=0, keepdims=True)
+        return ex / ex.sum(axis=1, keepdims=True)
 
     @staticmethod
     def kronecker_delta(i, j):
@@ -121,8 +124,13 @@ class NeuralNetwork:
         :return: The result.
         """
 
+        i = 0
         for layer in self._layers:
+            i = i + 1
             X = layer.activate(X)
+            # print('i', i)
+            # if i != 4:
+            #     print('X', X)
         return X
 
     def predict(self, X):
@@ -133,7 +141,6 @@ class NeuralNetwork:
         """
 
         ff = self.feed_forward(X)
-        # print('ff', ff)
         # One row
         if ff.ndim == 1:
             return np.argmax(ff)
@@ -151,7 +158,7 @@ class NeuralNetwork:
         # Feed forward for the output
         output = self.feed_forward(X)
 
-        # print('backpropagation', X)
+        # print('output', output)
 
         # Loop over the layers backward and generate deltas + errors for each layer
         for i in reversed(range(len(self._layers))):
@@ -159,17 +166,14 @@ class NeuralNetwork:
 
             # If this is the output layer
             if layer == self._layers[-1]:
-                p_a = layer.softmax(output)
-
-                def err(xi, x, real):
-                    return [
-                        2 * np.sum((x - real) * x * (layer.kronecker_delta(xi, yi) - y)) for (yi, y) in enumerate(p_a)
-                    ]
-
-                layer.delta = np.dot(np.vstack([err(xi, x, y[xi]) for (xi, x) in enumerate(p_a)]), output)
+                """ This is the derivate error of cross entropy error function
+                This error function is convinient because it's chained final derivate
+                leads to a very simple formula without jacobian matrix complications
+                """
+                layer.delta = output - y
             else:
                 next_layer = self._layers[i + 1]
-                layer.error = np.dot(next_layer.weights, next_layer.delta)
+                layer.error = next_layer.delta.dot(next_layer.weights.T)
                 layer.delta = layer.error * layer.apply_activation_derivative_mse(layer.last_activation)
         
         # Gradient descent part
@@ -178,8 +182,8 @@ class NeuralNetwork:
 
             # The input is either the previous layers output or X itself (for the first hidden layer)
             input_to_use = np.atleast_2d(X if i == 0 else self._layers[i - 1].last_activation)
-            layer.weights += layer.delta * input_to_use.T * learning_rate
-            layer.bias += layer.delta * learning_rate
+            layer.weights -= input_to_use.T.dot(layer.delta) * learning_rate
+            layer.bias -= layer.delta.sum(axis=0) * learning_rate
 
     def train(self, X, y, learning_rate, max_epochs):
         """
@@ -194,8 +198,8 @@ class NeuralNetwork:
         mses = []
         cees = []
         for i in range(max_epochs):
-            for j in range(len(X)):
-                self.backpropagation(X[j], y[j], learning_rate)
+            self.backpropagation(X, y, learning_rate)
+
             if i % 10 == 0:
                 ff = self.feed_forward(X)
                 mse = self.mean_squarred_error(ff, y)
@@ -213,7 +217,7 @@ class NeuralNetwork:
     @staticmethod
     def cross_entropy_error(a, y):
         """ This is the log loss function """
-        return np.sum(np.nan_to_num(-y*np.log(a)-(1-y)*np.log(1-a)))
+        return np.sum(-y * np.log(a))
 
     def save(self, out='save.model'):
         """
@@ -231,14 +235,9 @@ class NeuralNetwork:
         plt.show()
 
     def evaluate(self, y_predict, y):
-        # print('y_predict', y_predict)
+        print('y_predict', y_predict)
+        print('y', y)
         return skmetrics.log_loss(y, y_predict)
-        size = np.size(y_predict, 0)
-        y_predict = y_predict.reshape(-1, 2)[:, 0]
-        y = y[:, 0]
-        return ((1 / size)
-            * (-1 * y.dot(np.log(y_predict))
-            - (1 - y).dot(np.log(1 - y_predict))))
 
     @staticmethod
     def accuracy(y_pred, y_true):
