@@ -4,7 +4,6 @@ import sys
 import numpy as np
 
 from describe import describe_numeric_feature
-import dataconfig as cfg
 
 def scale(X):
     def _scaling(v, index):
@@ -18,9 +17,8 @@ def scale(X):
 
     return vectorize(_scaling)(X.T).T
 
-def shuffle_along_axis(a, axis):
-    if (cfg.preprocessing['shuffle_seed'] > 0):
-        np.random.seed(cfg.preprocessing['shuffle_seed'])
+def shuffle_along_axis(a, axis, shuffle_seed=0):
+    np.random.seed(shuffle_seed)
     idx = np.random.rand(*a.shape).argsort(axis=axis)
     return np.take_along_axis(a, idx, axis=axis)
 
@@ -39,7 +37,7 @@ def classify(classification, v):
     ret[np.where(classification == v)[0][0]] = 1
     return ret
 
-def preprocessing(data):
+def preprocessing(cfg, data):
     """
     Preprocess the dataset
     - Shuffle
@@ -49,14 +47,14 @@ def preprocessing(data):
     """
 
     # Shuffle dataset
-    data = shuffle_along_axis(data, 0)
+    data = shuffle_along_axis(data, 0, cfg['shuffle_seed'])
 
     data = np.concatenate((
         data[:,(0,1)],
         scale(np.delete(data, [0, 1], axis=1).astype(np.float))
     ), axis=1)
 
-    data_train, data_test = split(data, cfg.preprocessing['batch_size'])
+    data_train, data_test = split(data, cfg['batch_size'])
 
     # Define dataset of train and dataset of test
     y_train = data_train[:,1]

@@ -9,7 +9,7 @@ class Layer:
     Represents a layer (hidden or output) in our neural network.
     """
 
-    def __init__(self, n_input, n_neurons, activation=None, weights=None, bias=None, seed=0):
+    def __init__(self, n_input, n_neurons, activation=None, weights=None, bias=None, weights_seed=0, bias_seed=0):
         """
         :param int n_input: The input size (coming from the input layer or a previous hidden layer)
         :param int n_neurons: The number of neurons in this layer.
@@ -18,14 +18,18 @@ class Layer:
         :param bias: The layer's bias.
         """
 
-        np.random.seed(seed)
-
         eps = 0.5
         self.n_neurons = n_neurons
         self.n_input = n_input
+        
+        np.random.seed(weights_seed)
         self.weights = weights if weights is not None else np.random.rand(n_input, n_neurons)  * 2 * eps - eps
-        self.activation = activation
+        
+        np.random.seed(bias_seed)
         self.bias = bias if bias is not None else np.random.rand(n_neurons)  * 2 * eps - eps
+
+        self.activation = activation
+
         self.last_activation = None
         self.error = None
         self.delta = None
@@ -235,9 +239,7 @@ class NeuralNetwork:
         plt.show()
 
     def evaluate(self, y_predict, y):
-        print('y_predict', y_predict)
-        print('y', y)
-        return skmetrics.log_loss(y, y_predict)
+        return skmetrics.log_loss(y, y_predict) / len(y)
 
     @staticmethod
     def accuracy(y_pred, y_true):
