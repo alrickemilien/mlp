@@ -41,12 +41,7 @@ class Layer:
         :return: The result.
         """
 
-        # print('layer\'s weights', self.weights)
-
         r = A.dot(self.weights) + self.bias
-
-        # print('r', r)
-        # print('self.bias', self.bias)
 
         self.last_activation = self._apply_activation(r)
         return self.last_activation
@@ -61,27 +56,15 @@ class Layer:
         # In case no activation function was chosen
         if self.activation is None:
             return r
-        # tanh
         if self.activation == 'tanh':
             return np.tanh(r)
-        # sigmoid
         if self.activation == 'sigmoid':
             return 1 / (1 + np.exp(-r))
-        # softamx
         if self.activation == 'softmax':
             return self.softmax(r)
         return r
-    
-    @staticmethod
-    def softmax(r):
-        ex = np.exp(r)
-        return ex / ex.sum(axis=1, keepdims=True)
 
-    @staticmethod
-    def kronecker_delta(i, j):
-        return 0 if i != j else 1
-
-    def apply_activation_derivative_mse(self, r):
+    def apply_activation_derivative(self, r):
         """
         Applies the derivative of the activation function (if any).
         :param r: The normal value.
@@ -97,21 +80,25 @@ class Layer:
             return 1 - r ** 2
         if self.activation == 'sigmoid':
             return r * (1 - r)
-        if self.activation == 'softmax':
-            def mse_softmax_derivate(xi):
-                return [r[xi] * (r[xi] - self.kronecker_delta(xi, yi)) for (yi, _) in enumerate(r)]
-
-            m = np.vstack([mse_softmax_derivate(xi) for (xi, _) in enumerate(r)])
-            return np.dot(m, r)
         return r
+    
+    @staticmethod
+    def softmax(r):
+        ex = np.exp(r)
+        return ex / ex.sum(axis=1, keepdims=True)
+
+    @staticmethod
+    def kronecker_delta(i, j):
+        return 0 if i != j else 1
 
 class NeuralNetwork:
     """
     Represents a neural network.
     """
 
-    def __init__(self):
+    def __init__(self, error='cee'):
         self._layers = []
+        self.error = error
 
     def add_layer(self, layer):
         """
@@ -128,13 +115,8 @@ class NeuralNetwork:
         :return: The result.
         """
 
-        i = 0
         for layer in self._layers:
-            i = i + 1
             X = layer.activate(X)
-            # print('i', i)
-            # if i != 4:
-            #     print('X', X)
         return X
 
     def predict(self, X):
@@ -150,6 +132,18 @@ class NeuralNetwork:
             return np.argmax(ff)
         # Multiple rows
         return np.argmax(ff, axis=1)
+
+    
+    def apply_error_derivate(self, output, y):
+        if self.error == 'cee':
+            return output - y
+        if self.error == 'mse':
+            def mse_softmax_derivate(xi):
+                return [r[xi] * (r[xi] - self.kronecker_delta(xi, yi)) for (yi, _) in enumerate(r)]
+
+            m = np.vstack([mse_softmax_derivate(xi) for (xi, _) in enumerate(r)])
+            return np.dot(m, r)
+        return output - y
 
     def backpropagation(self, X, y, learning_rate):
         """
@@ -174,11 +168,11 @@ class NeuralNetwork:
                 This error function is convinient because it's chained final derivate
                 leads to a very simple formula without jacobian matrix complications
                 """
-                layer.delta = output - y
+                layer.delta = self.apply_error_derivate(output, y)
             else:
                 next_layer = self._layers[i + 1]
                 layer.error = next_layer.delta.dot(next_layer.weights.T)
-                layer.delta = layer.error * layer.apply_activation_derivative_mse(layer.last_activation)
+                layer.delta = layer.error * layer.apply_activation_derivative(layer.last_activation)
         
         # Gradient descent part
         for i in range(len(self._layers)):
@@ -216,6 +210,9 @@ class NeuralNetwork:
     @staticmethod
     def mean_squarred_error(a, y):
         """ This is the log loss function """
+        # print('np.argmax(a, axis=1)', np.argmax(a, axis=1))
+        # print('[np.where(x == 1)[0][0] for x in y]', [np.where(x == 1)[0][0] for x in y])
+
         return np.mean(np.square([np.where(x == 1)[0][0] for x in y] - np.argmax(a, axis=1)))
     
     @staticmethod
@@ -232,11 +229,19 @@ class NeuralNetwork:
             return [layer.activation, layer.n_input, layer.n_neurons, layer.weights, layer.bias]
         np.save(out, np.vstack([f(x) for x in self._layers]))
 
-    def plot(self, mses):
-        plt.plot(np.arange(len(mses)) * 10, mses)
-        plt.ylabel('MSE')
-        plt.xlabel('EPOCH')
+    def plot(self, mses, cees):
+        fig, axes = plt.subplots(nrows=2, ncols=1, figsize=(8,8))
+
+        axes[0].plot(np.arange(len(mses)) * 10, mses)
+        axes[0].set_ylabel('MSE')
+        axes[0].set_xlabel('EPOCH')
+
+        axes[1].plot(np.arange(len(cees)) * 10, cees)
+        axes[1].set_ylabel('CEE')
+        axes[1].set_xlabel('EPOCH')
+
         plt.show()
+
 
     def evaluate(self, y_predict, y):
         return skmetrics.log_loss(y, y_predict) / len(y)

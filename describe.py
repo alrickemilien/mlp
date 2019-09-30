@@ -11,8 +11,6 @@ import yaml
 
 import tools.csv2data as csv2data
 
-import dataconfig as cfg
-
 def describe_numeric_feature(data, index, features_start_index=0, missing_data=False):
     stats = {}
 

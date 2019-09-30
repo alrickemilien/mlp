@@ -47,17 +47,17 @@ X_train, y_train, _, _ = preprocessing(cfg, csv2data(dataset_path))
 
 # Build the network
 nn = NeuralNetwork()
-w_seed = cfg['weights_seed']
-b_seed = cfg['bias_seed']
+w_seed = int(cfg['weights_seed'])
+b_seed = int(cfg['bias_seed'])
 nn.add_layer(Layer(n_input=X_train.shape[1], n_neurons=5, activation='sigmoid', weights_seed=w_seed, bias_seed=b_seed))
 nn.add_layer(Layer(n_input=5, n_neurons=5, activation='sigmoid', weights_seed=w_seed, bias_seed=b_seed))
 nn.add_layer(Layer(n_input=5, n_neurons=3, activation='sigmoid', weights_seed=w_seed, bias_seed=b_seed))
 nn.add_layer(Layer(n_input=3, n_neurons=y_train.shape[1], activation='softmax', weights_seed=w_seed, bias_seed=b_seed))
 
 # Train
-mses, _ = nn.train(X_train, y_train, learning_rate=cfg['learning_rate'], max_epochs=cfg['epoch'])
+mses, cees = nn.train(X_train, y_train, learning_rate=float(cfg['learning_rate']), max_epochs=int(cfg['epoch']))
 
 if (options.plot is True):
-    nn.plot(mses)
+    nn.plot(mses, cees)
 
 nn.save()

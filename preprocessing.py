@@ -47,14 +47,14 @@ def preprocessing(cfg, data):
     """
 
     # Shuffle dataset
-    data = shuffle_along_axis(data, 0, cfg['shuffle_seed'])
+    data = shuffle_along_axis(data, 0, int(cfg['shuffle_seed']))
 
     data = np.concatenate((
         data[:,(0,1)],
         scale(np.delete(data, [0, 1], axis=1).astype(np.float))
     ), axis=1)
 
-    data_train, data_test = split(data, cfg['batch_size'])
+    data_train, data_test = split(data, float(cfg['batch_size']))
 
     # Define dataset of train and dataset of test
     y_train = data_train[:,1]
