@@ -53,10 +53,9 @@ X_train, y_train, _, _ = preprocessing(cfg, csv2data(dataset_path))
 nn = NeuralNetwork(error=options.error)
 w_seed = int(cfg['weights_seed'])
 b_seed = int(cfg['bias_seed'])
-nn.add_layer(Layer(n_input=X_train.shape[1], n_neurons=10, activation='sigmoid', weights_seed=w_seed, bias_seed=b_seed))
-nn.add_layer(Layer(n_input=10, n_neurons=10, activation='sigmoid', weights_seed=w_seed, bias_seed=b_seed))
-nn.add_layer(Layer(n_input=10, n_neurons=6, activation='sigmoid', weights_seed=w_seed, bias_seed=b_seed))
-nn.add_layer(Layer(n_input=6, n_neurons=3, activation='sigmoid', weights_seed=w_seed, bias_seed=b_seed))
+nn.add_layer(Layer(n_input=X_train.shape[1], n_neurons=5, activation='sigmoid', weights_seed=w_seed, bias_seed=b_seed))
+nn.add_layer(Layer(n_input=5, n_neurons=4, activation='sigmoid', weights_seed=w_seed, bias_seed=b_seed))
+nn.add_layer(Layer(n_input=4, n_neurons=3, activation='sigmoid', weights_seed=w_seed, bias_seed=b_seed))
 nn.add_layer(Layer(n_input=3, n_neurons=y_train.shape[1], activation='softmax', weights_seed=w_seed, bias_seed=b_seed))
 
 # Train
