@@ -70,4 +70,4 @@ y_predict = nn.feed_forward(X_test)
 
 print('MSE: %f' % (nn.mean_squarred_error(y_predict, y_test)))
 print('ACCURACY: %f' % (nn.accuracy(y_predict, y_test)))
-print('CEE: %f' % (nn.evaluate(y_predict, y_test)))
+print('CEE: %f' % (nn.cross_entropy_error(y_predict, y_test)))

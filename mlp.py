@@ -23,6 +23,7 @@ class Layer:
         self.n_input = n_input
         
         np.random.seed(weights_seed)
+        # This leads to matrix of size (n_input, n_neurons)
         self.weights = weights if weights is not None else np.random.rand(n_input, n_neurons)  * 2 * eps - eps
         
         np.random.seed(bias_seed)
@@ -34,58 +35,64 @@ class Layer:
         self.error = None
         self.delta = None
 
-    def activate(self, A):
+    def activate(self, X):
         """
         Calculates the dot product of this layer.
         :param x: The input.
         :return: The result.
         """
 
-        r = A.dot(self.weights) + self.bias
+        # X is of dimension (M, N) with M the number of rows and N number of columns/feature
+        # W is of dimension (N, L) with N number of row of input and L number of columns of output
+        # X.dot(W) is of dimension (M, L)
+        # Bias is an array of size L
+        # Add B0, B1 ... BL to each row of X.dot(W)
+        Z = X.dot(self.weights) + self.bias
 
-        self.last_activation = self._apply_activation(r)
+        self.last_activation = self._apply_activation(Z)
         return self.last_activation
 
-    def _apply_activation(self, r):
+    def _apply_activation(self, Z):
         """
         Applies the chosen activation function (if any).
         :param r: The normal value.
         :return: The "activated" value.
         """
 
-        # In case no activation function was chosen
-        if self.activation is None:
-            return r
         if self.activation == 'tanh':
-            return np.tanh(r)
+            return np.tanh(Z)
         if self.activation == 'sigmoid':
-            return 1 / (1 + np.exp(-r))
+            return 1 / (1 + np.exp(-Z))
         if self.activation == 'softmax':
-            return self.softmax(r)
-        return r
+            kw = dict(axis=1, keepdims=True)
 
-    def apply_activation_derivative(self, r):
+            # make every value 0 or below, as exp(0) won't overflow
+            Zrel = Z - Z.max(**kw)
+
+            # if you wanted better handling of small exponents, you could do something like this
+            # to try and make the values as large as possible without overflowing, The 0.9
+            # is a fudge factor to try and ignore rounding errors
+            #
+            #     xrel += np.log(np.finfo(float).max / x.shape[axis]) * 0.9
+
+            ex = np.exp(Zrel)
+            return ex / ex.sum(**kw)  
+        return Z
+
+    def apply_activation_derivative(self, Z):
         """
         Applies the derivative of the activation function (if any).
         :param r: The normal value.
         :return: The "derived" value.
         """
 
-        # We use 'r' directly here because its already activated, the only values that
+        # We use Z directly here because its already activated, the only values that
         # are used in this function are the last activations that were saved.
-
-        if self.activation is None:
-            return r
         if self.activation == 'tanh':
-            return 1 - r ** 2
+            return 1 - Z ** 2
         if self.activation == 'sigmoid':
-            return r * (1 - r)
-        return r
-    
-    @staticmethod
-    def softmax(r):
-        ex = np.exp(r)
-        return ex / ex.sum(axis=1, keepdims=True)
+            return Z * (1 - Z)
+        return Z
 
 class NeuralNetwork:
     """
@@ -111,38 +118,24 @@ class NeuralNetwork:
         :return: The result.
         """
 
+        tmp = X
         for layer in self._layers:
-            X = layer.activate(X)
-        return X
-
-    def predict(self, X):
-        """
-        Predicts a class (or classes).
-        :param X: The input values.
-        :return: The predictions.
-        """
-
-        ff = self.feed_forward(X)
-        # One row
-        if ff.ndim == 1:
-            return np.argmax(ff)
-        # Multiple rows
-        return np.argmax(ff, axis=1)
+            tmp = layer.activate(tmp)
+        return tmp
 
     @staticmethod
     def kronecker_delta(i, j):
         return 0 if i != j else 1
     
-    def apply_error_derivate(self, output, y):
+    def apply_error_derivate(self, out, y):
         if self.error == 'cee':
-            return output - y
+            return out - y
         if self.error == 'mse':
-            def mse_softmax_derivate(xi):
-                return [output[xi] * (output[xi] - self.kronecker_delta(xi, yi)) for (yi, _) in enumerate(output)]
-
-            m = np.vstack([mse_softmax_derivate(xi) for (xi, _) in enumerate(output)])
-            return output.dot(m.T)
-        return output - y
+            m = np.array([
+                [ out.T[xi].sum() * (out.T[yi].sum() - self.kronecker_delta(xi, yi)) for (yi, _) in enumerate(out.T)]
+                for (xi, _) in enumerate(out.T)])
+            return out.dot(m)
+        return out - y
 
     def backpropagation(self, X, y, learning_rate):
         """
@@ -178,11 +171,12 @@ class NeuralNetwork:
             layer = self._layers[i]
 
             # The input is either the previous layers output or X itself (for the first hidden layer)
-            input_to_use = np.atleast_2d(X if i == 0 else self._layers[i - 1].last_activation)
-            layer.weights -= input_to_use.T.dot(layer.delta) * learning_rate
+            A = np.atleast_2d(X if i == 0 else self._layers[i - 1].last_activation)
+
+            layer.weights -= A.T.dot(layer.delta) * learning_rate
             layer.bias -= layer.delta.sum(axis=0) * learning_rate
 
-    def train(self, X, y, learning_rate, max_epochs):
+    def train(self, X, y, X_test, y_test, learning_rate, max_epochs):
         """
         Trains the neural network using backpropagation.
         :param X: The input values.
@@ -194,14 +188,17 @@ class NeuralNetwork:
 
         mses = []
         cees = []
-        for i in range(max_epochs):
+        # for i in range(max_epochs):
+        i = 0
+        while True:
+            i += 1
             self.backpropagation(X, y, learning_rate)
 
             if i % 10 == 0:
-                ff = self.feed_forward(X)
-                mse = self.mean_squarred_error(ff, y)
+                y_predict = self.feed_forward(X_test)
+                mse = self.mean_squarred_error(y_predict, y_test)
                 mses.append(mse)
-                cee = self.cross_entropy_error(ff, y)
+                cee = self.cross_entropy_error(y_predict, y_test)
                 cees.append(cee)
                 print('Epoch: #%s, MSE: %f, CEE: %f' % (i, float(mse), float(cee)))
         return mses, cees
@@ -221,9 +218,9 @@ class NeuralNetwork:
         The format of the save is as following
         [layer:[activation,neurons,weights,biases]]
         """
-        def f(layer):
-            return [layer.activation, layer.n_input, layer.n_neurons, layer.weights, layer.bias]
-        np.save(out, np.vstack([f(x) for x in self._layers]))
+        n = np.vstack([[x.activation, x.n_input, x.n_neurons, x.weights, x.bias]
+                        for x in self._layers])
+        np.save(out, n)
 
     def plot(self, mses, cees):
         fig, axes = plt.subplots(nrows=2, ncols=1, figsize=(8,8))
@@ -239,10 +236,6 @@ class NeuralNetwork:
         plt.show()
 
     @staticmethod
-    def evaluate(y_predict, y):
-        return skmetrics.log_loss(y, y_predict)
-
-    @staticmethod
     def accuracy(a, y):
         """
         Calculates the accuracy between the predicted labels and true labels.
@@ -250,7 +243,9 @@ class NeuralNetwork:
         :param y_true: The true labels.
         :return: The calculated accuracy.
         """
-        pred = np.argmax(a, axis=1)
-        truth = np.array([np.where(x == 1)[0][0] for x in y])
-        return (pred == truth).mean()
+        arg = np.argmax(a, axis=1)
+        pred = np.zeros(shape=y.shape)
+        for xi in range(len(y)):
+            pred[xi][arg[xi]] = 1
+        return (pred == y).mean()
     

@@ -10,12 +10,7 @@ def scale(X):
         stats = describe_numeric_feature(v, index)
         return (v - stats['mean']) / stats['std']
 
-    def vectorize(f):
-        def fnv(array) :
-            return np.vstack([_scaling(x, xi) for (xi, x) in enumerate(array)])
-        return fnv
-
-    return vectorize(_scaling)(X.T).T
+    return np.vstack([_scaling(x, xi) for (xi, x) in enumerate(X.T)]).T
 
 def shuffle_along_axis(a, axis, shuffle_seed=0):
     np.random.seed(shuffle_seed)
@@ -29,7 +24,6 @@ def split(data, batch_percentage=1):
     data_train = data[:int(len(data) * batch_percentage)]
     data_test = data[int(len(data) * batch_percentage):]
     return data_train, data_test
-
 
 def classify(classification, v):
     size = len(classification)
