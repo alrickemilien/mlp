@@ -93,7 +93,6 @@ By removing this feature, the input of the mlp is decreased by one and the compl
 # Sources
 https://sebastianraschka.com/Articles/2015_singlelayer_neurons.html
 https://www.dbs.ifi.lmu.de/Lehre/MaschLernen/SS2014/Skript/Perceptron2014.pdf
-https://blog.zhaytam.com/2018/08/15/implement-neural-network-backpropagation/
 https://blog.usejournal.com/training-a-single-perceptron-405026d61f4b
 http://www.cristiandima.com/neural-networks-from-scratch-in-python/
 
