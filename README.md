@@ -130,3 +130,6 @@ https://stats.stackexchange.com/questions/153285/derivative-of-softmax-and-squar
 
 # MSE and sigmoid
 http://www.1-4-5.net/~dmm/ml/mse.pdf
+
+# Gradient checking
+https://machinelearningmedium.com/2018/03/29/backpropagation-implementation-and-gradient-checking/

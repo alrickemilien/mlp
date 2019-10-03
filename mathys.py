@@ -14,15 +14,17 @@ from tqdm import tqdm
 
 
 class NeuralNetwork():
-    def __init__(self, X, y, array_layer, loading_file, regularisation, alpha):
+    def __init__(self, X, y, array_layer, loading_file, regularisation, alpha, seed):
+        np.random.seed(seed)
         self.nbr_layer = len(array_layer) - 1
-        print('X', X)
+
         self.nbr_input = X.shape[0]
         self.matrix_ones = np.float32(np.ones((self.nbr_input,1)))
         self.y = y
         self.size_layer = array_layer
         # print('self.matrix_ones', self.matrix_ones)
         self.neural_matrix = [np.hstack((self.matrix_ones, np.float32(X)))]
+
         self.__create_weight_matrix__(array_layer, loading_file)
         self.alpha = np.float32(alpha)
         self.dynamic_alpha = 1 if alpha == 0 else 0
@@ -34,6 +36,8 @@ class NeuralNetwork():
     def __create_weight_matrix__(self, array_layer, loading_file):
         if loading_file == "":
             self.weight_matrix = []
+            # For each layer, compute matrix and append it to self.weight_matrix
+            # self.weight_matrix contains wieght matrix for each layer
             for i in range(1, len(array_layer)):
                 previous = array_layer[i - 1]
                 actual = array_layer[i]
@@ -44,6 +48,7 @@ class NeuralNetwork():
 
 
     def forward_propagation(self):
+        # print('self.neural_matrix forward', self.neural_matrix)
         for i, matrix_weight in enumerate(self.weight_matrix):
             new_matrix = 0.99998 / (1 + np.exp(-np.clip(np.dot(self.neural_matrix[i], matrix_weight),-50, 50))) + 0.00001
             if (i != self.nbr_layer - 1):
@@ -51,12 +56,26 @@ class NeuralNetwork():
             self.neural_matrix.append(new_matrix)
                 
 
+    def predict(self, X_test, y_test):
+        self.nbr_input = X_test.shape[0]
+        self.matrix_ones = np.float32(np.ones((self.nbr_input,1)))
+        self.y = y_test
+        self.neural_matrix = [np.hstack((self.matrix_ones, np.float32(X_test)))]
+
+        print('PREDICTION', self.neural_matrix[-1])
+
+        tqdm.write(" _____________________________________________________________________")
+        tqdm.write("|    PREDICT    |      cost        | regularized cost |   accuracy    |")
+        self.forward_propagation()
+        self.regularized_cost_function()
+        self.accuracy_function()
+        tqdm.write("|               |    {:.8f}    |    {:.8f}    |   {:.8f}  |".format(self.cost, self.regularized_cost, self.accuracy))
+
     def cost_function(self):
         actual_output = self.neural_matrix[-1].copy()
         actual_output = np.clip(actual_output, self.epsilon, 1 - self.epsilon, actual_output)
-        self.cost = -np.sum(np.multiply(self.output, np.log(actual_output)) + np.multiply((1 - self.output), np.log(1 - actual_output)))
+        self.cost = -np.sum(np.multiply(self.y, np.log(actual_output)) + np.multiply((1 - self.y), np.log(1 - actual_output)))
         self.cost /= self.nbr_input
-
 
 
     def regularized_cost_function(self):
@@ -72,11 +91,14 @@ class NeuralNetwork():
 
     def accuracy_function(self):
         output_matrix = self.neural_matrix[-1]
-        self.accuracy = np.mean(np.equal(np.argmax(self.output, axis = 1), np.argmax(output_matrix, axis = 1)))
+        self.accuracy = np.mean(np.equal(np.argmax(self.y, axis = 1), np.argmax(output_matrix, axis = 1)))
 
 
     def backward_propagation(self):
         gradient = []
+        # print('self.neural_matrix', self.neural_matrix)
+        # print('self.y', self.y)
+
         middle_part = [self.neural_matrix[-1] - self.y]
         for i in range(self.nbr_layer, 1,-1):
             actual = self.neural_matrix[i - 1][:,1:]
@@ -111,8 +133,6 @@ class NeuralNetwork():
             np.save(saving_file, self.weight_matrix)
 
 
-
-
 parser = argparse.ArgumentParser()
 parser.add_argument("input", type=str, help="The name of the input file. It need to be stored so that np.load can properly load the input")
 parser.add_argument("output", type=str, help="The name of the expected output file. It need to be stored so that np.load can properly load the expected output")
@@ -122,6 +142,7 @@ parser.add_argument("--load", type=str, help="Name of the loading file for weigt
 parser.add_argument("--iteration", "-i", type=int, help="Number of iterations that need to be done", default=1000)
 parser.add_argument("--regularisation", "-r", type=float, help="The value of the regularisation in the cost", default=0.016)
 parser.add_argument("--alpha", type=float, help="the value of alpha. By default, alpha is dynamic", default = 0)
+parser.add_argument("--seed", type=int, help="seed initialization", default = 42)
 
 args = parser.parse_args()
 
@@ -134,6 +155,17 @@ y = np.float32(np.zeros((output.shape[0], int(np.max(output)) + 1)))
 for i in range(len(output)):
     y[i][int(output[i])] = 1
 
-network = NeuralNetwork(X, y, args.size_layer, args.load, np.float32(args.regularisation), args.alpha)
+# y is a Mx2 matrix with 2 the number of classes
+# X is a NxM matrix with N the number of features and M the number of sample
+
+X_train = X[:int(len(X) * 0.8)]
+y_train = y[:int(len(y) * 0.8)]
+
+X_test = X[int(len(X) * 0.8):]
+y_test = y[int(len(y) * 0.8):]
+
+network = NeuralNetwork(X_train, y_train, args.size_layer, args.load, np.float32(args.regularisation), args.alpha, args.seed)
 
 network.run(args.iteration, args.save)
+
+network.predict(X_test, y_test)
