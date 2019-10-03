@@ -47,7 +47,7 @@ with open(options.configure, 'r') as yfile:
     cfg = yaml.load(yfile, Loader=yaml.BaseLoader)
 
 # Load data set
-X_train, y_train, _, _ = preprocessing(cfg, csv2data(dataset_path))
+X_train, y_train, X_test, y_test = preprocessing(cfg, csv2data(dataset_path))
 
 # Build the network
 nn = NeuralNetwork(error=options.error)
@@ -59,7 +59,7 @@ nn.add_layer(Layer(n_input=4, n_neurons=3, activation='sigmoid', weights_seed=w_
 nn.add_layer(Layer(n_input=3, n_neurons=y_train.shape[1], activation='softmax', weights_seed=w_seed, bias_seed=b_seed))
 
 # Train
-mses, cees = nn.train(X_train, y_train, learning_rate=float(cfg['learning_rate']), max_epochs=int(cfg['epoch']))
+mses, cees = nn.train(X_train, y_train, X_test, y_test, learning_rate=float(cfg['learning_rate']), max_epochs=int(cfg['epoch']))
 
 if (options.plot is True):
     nn.plot(mses, cees)
