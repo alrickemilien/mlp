@@ -160,11 +160,11 @@ class NeuralNetwork:
                 This error function is convinient because it's chained final derivate
                 leads to a very simple formula without jacobian matrix complications
                 """
-                layer.delta = self.apply_error_derivate(output, y) * (1.0 / output.shape[0])
+                layer.delta = self.apply_error_derivate(output, y)
             else:
                 next_layer = self._layers[i + 1]
                 layer.error = next_layer.delta.dot(next_layer.weights.T)
-                layer.delta = layer.error * layer.apply_activation_derivative(layer.last_activation) * (1.0 / layer.last_activation.shape[0])
+                layer.delta = layer.error * layer.apply_activation_derivative(layer.last_activation)
         
         # Gradient descent part
         for i in range(len(self._layers)):
@@ -188,9 +188,9 @@ class NeuralNetwork:
 
         mses = []
         cees = []
-        # for i in range(max_epochs):
-        i = 0
-        while True:
+        for i in range(max_epochs):
+        # i = 0
+        # while i:
             i += 1
             self.backpropagation(X, y, learning_rate)
 

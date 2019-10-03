@@ -1,0 +1,7 @@
+Pour évaluer, run whole command :
+
+./evaluate.py \
+&& ./split.sh data_training.csv \
+&& ./FCNN2.py --save model --seed 42 --alpha 0.015 --iteration 1000 input.csv output.csv 30 90 90 2 \
+&& ./split.sh data_test.csv \
+&& ./predict.py --alpha 0.15 model.npy input.csv output.csv 30 90 90 2
