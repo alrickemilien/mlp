@@ -35,6 +35,9 @@ class Layer:
         self.error = None
         self.delta = None
 
+        self.dW = None
+        self.dB = None
+
     def activate(self, X):
         """
         Calculates the dot product of this layer.
@@ -76,7 +79,9 @@ class Layer:
             #     xrel += np.log(np.finfo(float).max / x.shape[axis]) * 0.9
 
             ex = np.exp(Zrel)
-            return ex / ex.sum(**kw)  
+            return ex / ex.sum(**kw)
+        if self.activation == 'relu':
+            return 1. * (Z > 0)
         return Z
 
     def apply_activation_derivative(self, Z):
@@ -92,6 +97,8 @@ class Layer:
             return 1 - Z ** 2
         if self.activation == 'sigmoid':
             return Z * (1 - Z)
+        if self.activation == 'relu':
+            return Z * (Z > 0)
         return Z
 
 class NeuralNetwork:
@@ -118,10 +125,10 @@ class NeuralNetwork:
         :return: The result.
         """
 
-        tmp = X
+        A = X.copy()
         for layer in self._layers:
-            tmp = layer.activate(tmp)
-        return tmp
+            A = layer.activate(A)
+        return A
 
     @staticmethod
     def kronecker_delta(i, j):
@@ -151,7 +158,8 @@ class NeuralNetwork:
         # print('output', output)
 
         # Loop over the layers backward and generate deltas + errors for each layer
-        for i in reversed(range(len(self._layers))):
+        # for i in reversed(range(len(self._layers))):
+        for i in range(len(self._layers) - 1, -1, -1):
             layer = self._layers[i]
 
             # If this is the output layer
@@ -165,18 +173,19 @@ class NeuralNetwork:
                 next_layer = self._layers[i + 1]
                 layer.error = next_layer.delta.dot(next_layer.weights.T)
                 layer.delta = layer.error * layer.apply_activation_derivative(layer.last_activation)
+            
+            A = np.atleast_2d(X if i == 0 else self._layers[i - 1].last_activation)
+            layer.dW = A.T.dot(layer.delta)
+            layer.dB = np.sum(layer.delta, axis=0)
+			
         
         # Gradient descent part
         for i in range(len(self._layers)):
-            layer = self._layers[i]
+            self._layers[i].dW += 0.03 * self._layers[i].weights
+            self._layers[i].weights -= self._layers[i].dW * learning_rate
+            self._layers[i].bias -= self._layers[i].dB * learning_rate
 
-            # The input is either the previous layers output or X itself (for the first hidden layer)
-            A = np.atleast_2d(X if i == 0 else self._layers[i - 1].last_activation)
-
-            layer.weights -= A.T.dot(layer.delta) * learning_rate
-            layer.bias -= layer.delta.sum(axis=0) * learning_rate
-
-    def train(self, X, y, X_test, y_test, learning_rate, max_epochs):
+    def train(self, X, y, X_test, y_test, learning_rate, max_epochs, batch_size=0.3):
         """
         Trains the neural network using backpropagation.
         :param X: The input values.
@@ -188,11 +197,16 @@ class NeuralNetwork:
 
         mses = []
         cees = []
-        for i in range(max_epochs):
-        # i = 0
-        # while i:
+        # for i in range(max_epochs):
+        i = 0
+        while True:
             i += 1
-            self.backpropagation(X, y, learning_rate)
+            for (j, _) in enumerate(np.arange(0, 1, batch_size)):
+                start = int(len(X) * j * batch_size)
+                end = int(len(X) * (j + 1) * batch_size)
+                if (end > len(X)):
+                    end = len(X)
+                self.backpropagation(X[start:end], y[start:end], learning_rate)
 
             if i % 10 == 0:
                 y_predict = self.feed_forward(X_test)
@@ -200,7 +214,7 @@ class NeuralNetwork:
                 mses.append(mse)
                 cee = self.cross_entropy_error(y_predict, y_test)
                 cees.append(cee)
-                print('Epoch: #%s, MSE: %f, CEE: %f' % (i, float(mse), float(cee)))
+                print('Epoch: #%s, Batches: %d, MSE: %f, CEE: %f' % (i, int(len(X) * batch_size), float(mse), float(cee)))
         return mses, cees
 
     @staticmethod

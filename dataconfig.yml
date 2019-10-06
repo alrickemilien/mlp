@@ -2,10 +2,10 @@ missing_data: False
 header: False
 features_start_index: 2
 features_end_index: -1
-batch_size: 0.8
+batch_size: 0.7
 shuffle_seed: 12345
 bias_seed: 422999
 weights_seed: 7
-epoch: 500
-learning_rate: 0.012
+epoch: 100
+learning_rate: 0.01
 to_skip: []
