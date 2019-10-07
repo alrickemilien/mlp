@@ -9,25 +9,18 @@ class Layer:
     Represents a layer (hidden or output) in our neural network.
     """
 
-    def __init__(self, n_input, n_neurons, activation=None, weights=None, bias=None, weights_seed=0, bias_seed=0):
+    def __init__(self, n_neurons, activation=None, weights=None, bias=None):
         """
-        :param int n_input: The input size (coming from the input layer or a previous hidden layer)
         :param int n_neurons: The number of neurons in this layer.
         :param str activation: The activation function to use (if any).
         :param weights: The layer's weights.
         :param bias: The layer's bias.
         """
-
-        eps = 0.5
         self.n_neurons = n_neurons
-        self.n_input = n_input
-        
-        np.random.seed(weights_seed)
-        # This leads to matrix of size (n_input, n_neurons)
-        self.weights = weights if weights is not None else np.random.rand(n_input, n_neurons)  * 2 * eps - eps
-        
-        np.random.seed(bias_seed)
-        self.bias = bias if bias is not None else np.random.rand(n_neurons)  * 2 * eps - eps
+        self.n_input = 0
+
+        self.weights = weights
+        self.bias = bias
 
         self.activation = activation
 
@@ -50,7 +43,7 @@ class Layer:
         # X.dot(W) is of dimension (M, L)
         # Bias is an array of size L
         # Add B0, B1 ... BL to each row of X.dot(W)
-        Z = X.dot(self.weights) + self.bias
+        Z = X if self.weights is None else X.dot(self.weights) + self.bias
 
         self.last_activation = self._apply_activation(Z)
         return self.last_activation
@@ -62,8 +55,11 @@ class Layer:
         :return: The "activated" value.
         """
 
+        if self.activation == None:
+            return Z
         if self.activation == 'tanh':
-            return np.tanh(Z)
+            # return np.tanh(Z)
+            return (np.exp(Z) - np.exp(-Z)) / (np.exp(Z) + np.exp(-Z))
         if self.activation == 'sigmoid':
             return 1 / (1 + np.exp(-Z))
         if self.activation == 'softmax':
@@ -110,13 +106,26 @@ class NeuralNetwork:
         self._layers = []
         self.error = error
 
-    def add_layer(self, layer):
+    def add_layer(self, layer, weights_seed=0, bias_seed=0):
         """
         Adds a layer to the neural network.
         :param Layer layer: The layer to add.
         """
-
         self._layers.append(layer)
+
+        if len(self._layers) > 1:
+            layer.n_input = self._layers[-2].n_neurons
+        
+            eps = 0.5
+        
+            np.random.seed(weights_seed)
+            layer.weights = layer.weights if layer.weights is not None else np.random.rand(layer.n_input, layer.n_neurons)  * 2 * eps - eps
+        
+            np.random.seed(bias_seed)
+            # layer.bias = layer.bias if layer.bias is not None else np.random.rand(layer.n_neurons)  * 2 * eps - eps
+            layer.bias = layer.bias if layer.bias is not None else np.zeros(layer.n_neurons)
+
+            
 
     def feed_forward(self, X):
         """
@@ -124,7 +133,6 @@ class NeuralNetwork:
         :param X: The input values.
         :return: The result.
         """
-
         A = X.copy()
         for layer in self._layers:
             A = layer.activate(A)
@@ -155,11 +163,9 @@ class NeuralNetwork:
         # Feed forward for the output
         output = self.feed_forward(X)
 
-        # print('output', output)
-
         # Loop over the layers backward and generate deltas + errors for each layer
         # for i in reversed(range(len(self._layers))):
-        for i in range(len(self._layers) - 1, -1, -1):
+        for i in range(len(self._layers) - 1, -1,-1):
             layer = self._layers[i]
 
             # If this is the output layer
@@ -180,12 +186,12 @@ class NeuralNetwork:
 			
         
         # Gradient descent part
-        for i in range(len(self._layers)):
+        for i in range(1, len(self._layers), 1):
             self._layers[i].dW += 0.03 * self._layers[i].weights
             self._layers[i].weights -= self._layers[i].dW * learning_rate
             self._layers[i].bias -= self._layers[i].dB * learning_rate
 
-    def train(self, X, y, X_test, y_test, learning_rate, max_epochs, batch_size=0.3):
+    def train(self, X, y, X_test, y_test, learning_rate, max_epochs, batch_size=0.33):
         """
         Trains the neural network using backpropagation.
         :param X: The input values.
@@ -201,11 +207,15 @@ class NeuralNetwork:
         i = 0
         while True:
             i += 1
-            for (j, _) in enumerate(np.arange(0, 1, batch_size)):
-                start = int(len(X) * j * batch_size)
-                end = int(len(X) * (j + 1) * batch_size)
-                if (end > len(X)):
-                    end = len(X)
+            from_to = np.arange(0, 1, batch_size)
+            
+            for j in range(0, len(from_to) - 1, 1):
+                start = int(len(X) * from_to[j])
+                end = int(len(X) * from_to[j + 1])
+                self.backpropagation(X[start:end], y[start:end], learning_rate)
+            if (from_to[-1] != 1):
+                start = int(len(X) * from_to[-1])
+                end = len(X)
                 self.backpropagation(X[start:end], y[start:end], learning_rate)
 
             if i % 10 == 0:
