@@ -52,7 +52,7 @@ def preprocessing(cfg, data):
     """
 
     # Shuffle dataset
-    data = shuffle_along_axis(data, 0, int(cfg['shuffle_seed']))
+    # data = shuffle_along_axis(data, 0, int(cfg['shuffle_seed']))
 
     data = np.concatenate((
         data[:,(0,1)],
@@ -63,10 +63,10 @@ def preprocessing(cfg, data):
 
     # Define dataset of train and dataset of test
     y_train = data_train[:,1]
-    X_train = np.delete(data_train, [0, 1], axis=1).astype(np.float)
+    X_train = np.delete(data_train, [0, 1, 4, 5], axis=1).astype(np.float)
 
     y_test = data_test[:,1]
-    X_test = np.delete(data_test, [0, 1], axis=1).astype(np.float)
+    X_test = np.delete(data_test, [0, 1, 4, 5], axis=1).astype(np.float)
 
     classification = np.unique(data[:,1])
 

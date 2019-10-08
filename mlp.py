@@ -114,26 +114,39 @@ class NeuralNetwork:
         """
         self._layers.append(layer)
 
+        if (len(self._layers) == 1): return
+
         layer.n_input = layer.n_neurons if len(self._layers) == 1 else self._layers[-2].n_neurons
         
         eps = 0.5
         
         np.random.seed(weights_seed)
-        layer.weights = layer.weights if layer.weights is not None else np.random.rand(layer.n_input, layer.n_neurons)  * 2 * eps - eps
+        # layer.weights = layer.weights if layer.weights is not None else np.random.rand(layer.n_input, layer.n_neurons)  * 2 * eps - eps
+        layer.weights = layer.weights if layer.weights is not None else np.zeros((layer.n_input, layer.n_neurons))
         
         np.random.seed(bias_seed)
         # layer.bias = layer.bias if layer.bias is not None else np.random.rand(layer.n_neurons)  * 2 * eps - eps
-        layer.bias = layer.bias if layer.bias is not None else np.zeros(layer.n_neurons)
+        layer.bias = layer.bias if layer.bias is not None else np.ones((1, layer.n_neurons))
 
     def feed_forward(self, X):
+
+        print('X', X)
         """
         Feed forward the input through the layers.
         :param X: The input values.
         :return: The result.
         """
         A = X.copy()
+        i = 0
         for layer in self._layers:
+            print('i : %d' % (i))
+
+            print('W%d' % (i), layer.weights, 'shape', layer.weights.shape)
+
+            print('B%d' % (i), layer.bias, 'shape', layer.bias.shape)
+
             A = layer.activate(A)
+            i += 1
         return A
 
     @staticmethod
@@ -198,9 +211,9 @@ class NeuralNetwork:
 
         mses = []
         cees = []
-        # for i in range(max_epochs):
-        i = 0
-        while True:
+        for i in range(max_epochs):
+        # i = 0
+        # while True:
             i += 1
             from_to = np.arange(0, 1, batch_size)
             

@@ -6,6 +6,6 @@ batch_size: 0.7
 shuffle_seed: 42
 bias_seed: 42
 weights_seed: 42
-epoch: 100
+epoch: 1
 learning_rate: 0.01
-to_skip: [6, 7]
+to_skip: [4, 5]
