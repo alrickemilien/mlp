@@ -3,12 +3,24 @@
 import sys
 import numpy as np
 
+import pandas as pd
+
 from describe import describe_numeric_feature
 
 def scale(X):
     def _scaling(v, index):
         stats = describe_numeric_feature(v, index)
-        return (v - stats['mean']) / stats['std']
+        return (v - stats['min']) / (stats['max'] - stats['min'])
+        # return (v - stats['mean']) / stats['std']
+
+    # for (i, x) in enumerate(X.T):
+    #     stats = describe_numeric_feature(x, i)
+    #     print('INDEX: %d, MEAN: %f, STD: %f' % (i, stats['mean'], stats['std']))
+
+    # df = pd.DataFrame(data=X,    # values
+    #             index=np.arange(X.shape[0]),    # 1st column as index
+    #             columns=np.arange(X.shape[1]))  # 1st row as the column names
+    # print(df.describe(include = 'all'))
 
     return np.vstack([_scaling(x, xi) for (xi, x) in enumerate(X.T)]).T
 
@@ -26,8 +38,7 @@ def split(data, batch_percentage=1):
     return data_train, data_test
 
 def classify(classification, v):
-    size = len(classification)
-    ret = np.zeros(size)
+    ret = np.zeros(classification.shape[0])
     ret[np.where(classification == v)[0][0]] = 1
     return ret
 

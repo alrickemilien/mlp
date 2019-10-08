@@ -28,6 +28,7 @@ class Layer:
         self.error = None
         self.delta = None
 
+        self.dZ = None
         self.dW = None
         self.dB = None
 
@@ -43,10 +44,10 @@ class Layer:
         # X.dot(W) is of dimension (M, L)
         # Bias is an array of size L
         # Add B0, B1 ... BL to each row of X.dot(W)
-        Z = X if self.weights is None else X.dot(self.weights) + self.bias
+        Z = X.dot(self.weights) + self.bias
 
         self.last_activation = self._apply_activation(Z)
-        return self.last_activation
+        return self.last_activation.copy()
 
     def _apply_activation(self, Z):
         """
@@ -66,7 +67,7 @@ class Layer:
             kw = dict(axis=1, keepdims=True)
 
             # make every value 0 or below, as exp(0) won't overflow
-            Zrel = Z - Z.max(**kw)
+            Zrel = Z - np.max(Z, **kw)
 
             # if you wanted better handling of small exponents, you could do something like this
             # to try and make the values as large as possible without overflowing, The 0.9
@@ -75,7 +76,7 @@ class Layer:
             #     xrel += np.log(np.finfo(float).max / x.shape[axis]) * 0.9
 
             ex = np.exp(Zrel)
-            return ex / ex.sum(**kw)
+            return ex / np.sum(ex, **kw)
         if self.activation == 'relu':
             return 1. * (Z > 0)
         return Z
@@ -113,19 +114,16 @@ class NeuralNetwork:
         """
         self._layers.append(layer)
 
-        if len(self._layers) > 1:
-            layer.n_input = self._layers[-2].n_neurons
+        layer.n_input = layer.n_neurons if len(self._layers) == 1 else self._layers[-2].n_neurons
         
-            eps = 0.5
+        eps = 0.5
         
-            np.random.seed(weights_seed)
-            layer.weights = layer.weights if layer.weights is not None else np.random.rand(layer.n_input, layer.n_neurons)  * 2 * eps - eps
+        np.random.seed(weights_seed)
+        layer.weights = layer.weights if layer.weights is not None else np.random.rand(layer.n_input, layer.n_neurons)  * 2 * eps - eps
         
-            np.random.seed(bias_seed)
-            # layer.bias = layer.bias if layer.bias is not None else np.random.rand(layer.n_neurons)  * 2 * eps - eps
-            layer.bias = layer.bias if layer.bias is not None else np.zeros(layer.n_neurons)
-
-            
+        np.random.seed(bias_seed)
+        # layer.bias = layer.bias if layer.bias is not None else np.random.rand(layer.n_neurons)  * 2 * eps - eps
+        layer.bias = layer.bias if layer.bias is not None else np.zeros(layer.n_neurons)
 
     def feed_forward(self, X):
         """
@@ -144,7 +142,7 @@ class NeuralNetwork:
     
     def apply_error_derivate(self, out, y):
         if self.error == 'cee':
-            return out - y
+            return (out - y) / y.shape[0]
         if self.error == 'mse':
             m = np.array([
                 [ out.T[xi].sum() * (out.T[yi].sum() - self.kronecker_delta(xi, yi)) for (yi, _) in enumerate(out.T)]
@@ -168,22 +166,19 @@ class NeuralNetwork:
         for i in range(len(self._layers) - 1, -1,-1):
             layer = self._layers[i]
 
-            # If this is the output layer
-            if layer == self._layers[-1]:
-                """ This is the derivate error of cross entropy error function
-                This error function is convinient because it's chained final derivate
-                leads to a very simple formula without jacobian matrix complications
-                """
-                layer.delta = self.apply_error_derivate(output, y)
-            else:
-                next_layer = self._layers[i + 1]
-                layer.error = next_layer.delta.dot(next_layer.weights.T)
-                layer.delta = layer.error * layer.apply_activation_derivative(layer.last_activation)
-            
+            """
+            This is the derivate error of cross entropy error function
+            This error function is convinient because it's chained final derivate
+            leads to a very simple formula without jacobian matrix complications
+            """
+            layer.dZ = self.apply_error_derivate(output, y) if i == (len(self._layers) - 1) \
+                else layer.apply_activation_derivative(layer.last_activation) * self._layers[i + 1].delta
+
             A = np.atleast_2d(X if i == 0 else self._layers[i - 1].last_activation)
-            layer.dW = A.T.dot(layer.delta)
-            layer.dB = np.sum(layer.delta, axis=0)
-			
+            layer.dW = A.T.dot(layer.dZ)
+            layer.dB = np.sum(layer.dZ, axis=0)
+
+            layer.delta = layer.dZ.dot(layer.weights.T)
         
         # Gradient descent part
         for i in range(1, len(self._layers), 1):
@@ -191,7 +186,7 @@ class NeuralNetwork:
             self._layers[i].weights -= self._layers[i].dW * learning_rate
             self._layers[i].bias -= self._layers[i].dB * learning_rate
 
-    def train(self, X, y, X_test, y_test, learning_rate, max_epochs, batch_size=0.33):
+    def train(self, X, y, X_test, y_test, learning_rate, max_epochs, batch_size=1):
         """
         Trains the neural network using backpropagation.
         :param X: The input values.

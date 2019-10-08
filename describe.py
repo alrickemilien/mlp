@@ -35,6 +35,8 @@ def describe_numeric_feature(data, index, features_start_index=0, missing_data=F
     stats['var'] = (1 / (stats['count'] - 1) * np.sum(np.power(data - stats['mean'], 2)))
     stats['std'] = np.sqrt(stats['var'])
     stats['precision'] = np.sqrt(stats['var'])
+    stats['min'] = data.min()
+    stats['max'] = data.max()
     return stats
 
 def describe_classification_feature(y, index, features_start_index=0, missing_data=False):
@@ -61,6 +63,8 @@ def describe_classification_feature(y, index, features_start_index=0, missing_da
     stats['mean'] = sum(y) / stats['count']
     stats['var'] = (1 / (stats['count'] - 1) * np.sum(np.power(y - stats['mean'], 2)))
     stats['std'] = np.sqrt(stats['var'])
+    stats['min'] = y.min()
+    stats['max'] = y.max()
     return stats
 
 def describe(data, features_start_index=0, missing_data=False):
