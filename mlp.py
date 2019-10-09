@@ -9,7 +9,7 @@ class Layer:
     Represents a layer (hidden or output) in our neural network.
     """
 
-    def __init__(self, n_input, activation=None, weights=None, bias=None):
+    def __init__(self, n_input=0, activation=None, weights=None, bias=None):
         """
         :param int n_input: The number of neurons in this layer.
         :param str activation: The activation function to use (if any).
@@ -59,22 +59,12 @@ class Layer:
         if self.activation == None:
             return Z
         if self.activation == 'tanh':
-            # return np.tanh(Z)
-            return (np.exp(Z) - np.exp(-Z)) / (np.exp(Z) + np.exp(-Z))
+            return np.tanh(Z)
         if self.activation == 'sigmoid':
             return 1 / (1 + np.exp(-Z))
         if self.activation == 'softmax':
             kw = dict(axis=1, keepdims=True)
-
-            # make every value 0 or below, as exp(0) won't overflow
-            Zrel = Z - np.max(Z, **kw)
-
-            # if you wanted better handling of small exponents, you could do something like this
-            # to try and make the values as large as possible without overflowing, The 0.9
-            # is a fudge factor to try and ignore rounding errors
-            #
-            #     xrel += np.log(np.finfo(float).max / x.shape[axis]) * 0.9
-
+            Zrel = Z - np.max(Z, **kw) # make every value 0 or below, as exp(0) won't overflow
             ex = np.exp(Zrel)
             return ex / np.sum(ex, **kw)
         if self.activation == 'relu':
@@ -125,44 +115,26 @@ class NeuralNetwork:
         np.random.seed(weights_seed)
         previous_layer.weights = previous_layer.weights if previous_layer.weights is not None \
                                 else np.random.rand(previous_layer.n_input, previous_layer.n_output)  * 2 * eps - eps
+        
         np.random.seed(bias_seed)
-        # layer.bias = layer.bias if layer.bias is not None else np.random.rand(layer.n_output)  * 2 * eps - eps        
-        previous_layer.bias = previous_layer.bias if previous_layer.bias is not None else np.ones((1, previous_layer.n_output))
+        previous_layer.bias = previous_layer.bias if previous_layer.bias is not None \
+                                else np.random.rand(previous_layer.n_output)  * 2 * eps - eps
 
     def feed_forward(self, X):
-
-        # print('X', X)
         """
         Feed forward the input through the layers.
         :param X: The input values.
         :return: The result.
         """
         A = X.copy()
-        i = 0
         for layer in self._layers:
-            # print('i : %d' % (i))
-
-            # print('W%d' % (i), layer.weights, 'shape', layer.weights.shape)
-
-            # print('B%d' % (i), layer.bias, 'shape', layer.bias.shape)
-
             A = layer.activate(A)
-            i += 1
         return A
 
-    @staticmethod
-    def kronecker_delta(i, j):
-        return 0 if i != j else 1
-    
-    def apply_error_derivate(self, out, y):
+    def apply_softmax_error_derivate(self, y_predict, y):
         if self.error == 'cee':
-            return (out - y) / y.shape[0]
-        if self.error == 'mse':
-            m = np.array([
-                [ out.T[xi].sum() * (out.T[yi].sum() - self.kronecker_delta(xi, yi)) for (yi, _) in enumerate(out.T)]
-                for (xi, _) in enumerate(out.T)])
-            return out.dot(m)
-        return out - y
+            return (y_predict - y) / y.shape[0]
+        return y_predict - y
 
     def backpropagation(self, X, y, learning_rate):
         """
@@ -173,9 +145,7 @@ class NeuralNetwork:
         """
 
         # Feed forward for the output
-        output = self.feed_forward(X)
-
-        # print('output', output)
+        y_predict = self.feed_forward(X)
 
         # Loop over the layers backward and generate deltas + errors for each layer
         # for i in reversed(range(len(self._layers))):
@@ -187,18 +157,18 @@ class NeuralNetwork:
             This error function is convinient because it's chained final derivate
             leads to a very simple formula without jacobian matrix complications
             """
-            layer.dZ = self.apply_error_derivate(output, y) if i == (len(self._layers) - 1) \
+            layer.dZ = self.apply_softmax_error_derivate(y_predict, y) if i == (len(self._layers) - 1) \
                 else layer.apply_activation_derivative(layer.last_activation) * self._layers[i + 1].delta
 
             A = np.atleast_2d(X if i == 0 else self._layers[i - 1].last_activation)
+            
             layer.dW = A.T.dot(layer.dZ)
             layer.dB = np.sum(layer.dZ, axis=0)
 
             layer.delta = layer.dZ.dot(layer.weights.T)
         
         # Gradient descent part
-        for i in range(1, len(self._layers), 1):
-            # self._layers[i].dW += 0.03 * self._layers[i].weights
+        for i in range(0, len(self._layers), 1):
             self._layers[i].weights -= self._layers[i].dW * learning_rate
             self._layers[i].bias -= self._layers[i].dB * learning_rate
 
@@ -246,14 +216,12 @@ class NeuralNetwork:
     
     @staticmethod
     def cross_entropy_error(a, y):
-        return skmetrics.log_loss(y, a)
-        """ This is the log loss function """
-        return np.sum(-y * np.log(a))
+        return np.sum(-y * np.log(a)) / y.shape[0]
 
     def save(self, out='save.model'):
         """
-        The format of the save is as following
-        [layer:[activation,neurons,weights,biases]]
+        The topology of a layer is a as follow
+        [layer:[activation,inputs,outputs,weights,biases]]
         """
         n = np.vstack([[x.activation, x.n_input, x.n_output, x.weights, x.bias]
                         for x in self._layers])

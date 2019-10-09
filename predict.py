@@ -60,11 +60,10 @@ _, _, X_test, y_test = preprocessing(cfg, csv2data(dataset_path))
 
 for x in nn_load:
     activation=x[0]
-    n_input=x[1]
-    n_neurons=x[2]
     weights=x[3]
     bias=x[4]
-    nn.add_layer(Layer(n_input=n_input, n_neurons=n_neurons, activation=activation, bias=bias, weights=weights))
+    print('activation', activation)
+    nn.add_layer(Layer(activation=activation, weights=weights, bias=bias))
 
 y_predict = nn.feed_forward(X_test)
 
