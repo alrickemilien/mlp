@@ -9,15 +9,15 @@ class Layer:
     Represents a layer (hidden or output) in our neural network.
     """
 
-    def __init__(self, n_neurons, activation=None, weights=None, bias=None):
+    def __init__(self, n_input, activation=None, weights=None, bias=None):
         """
-        :param int n_neurons: The number of neurons in this layer.
+        :param int n_input: The number of neurons in this layer.
         :param str activation: The activation function to use (if any).
         :param weights: The layer's weights.
         :param bias: The layer's bias.
         """
-        self.n_neurons = n_neurons
-        self.n_input = 0
+        self.n_input = n_input
+        self.n_output = 0
 
         self.weights = weights
         self.bias = bias
@@ -116,21 +116,22 @@ class NeuralNetwork:
 
         if (len(self._layers) == 1): return
 
-        layer.n_input = layer.n_neurons if len(self._layers) == 1 else self._layers[-2].n_neurons
-        
+        previous_layer = self._layers[-2]
+
+        previous_layer.n_output = layer.n_input
+        previous_layer.activation = layer.activation
+
         eps = 0.5
-        
         np.random.seed(weights_seed)
-        # layer.weights = layer.weights if layer.weights is not None else np.random.rand(layer.n_input, layer.n_neurons)  * 2 * eps - eps
-        layer.weights = layer.weights if layer.weights is not None else np.zeros((layer.n_input, layer.n_neurons))
-        
+        previous_layer.weights = previous_layer.weights if previous_layer.weights is not None \
+                                else np.random.rand(previous_layer.n_input, previous_layer.n_output)  * 2 * eps - eps
         np.random.seed(bias_seed)
-        # layer.bias = layer.bias if layer.bias is not None else np.random.rand(layer.n_neurons)  * 2 * eps - eps
-        layer.bias = layer.bias if layer.bias is not None else np.ones((1, layer.n_neurons))
+        # layer.bias = layer.bias if layer.bias is not None else np.random.rand(layer.n_output)  * 2 * eps - eps        
+        previous_layer.bias = previous_layer.bias if previous_layer.bias is not None else np.ones((1, previous_layer.n_output))
 
     def feed_forward(self, X):
 
-        print('X', X)
+        # print('X', X)
         """
         Feed forward the input through the layers.
         :param X: The input values.
@@ -139,11 +140,11 @@ class NeuralNetwork:
         A = X.copy()
         i = 0
         for layer in self._layers:
-            print('i : %d' % (i))
+            # print('i : %d' % (i))
 
-            print('W%d' % (i), layer.weights, 'shape', layer.weights.shape)
+            # print('W%d' % (i), layer.weights, 'shape', layer.weights.shape)
 
-            print('B%d' % (i), layer.bias, 'shape', layer.bias.shape)
+            # print('B%d' % (i), layer.bias, 'shape', layer.bias.shape)
 
             A = layer.activate(A)
             i += 1
@@ -174,6 +175,8 @@ class NeuralNetwork:
         # Feed forward for the output
         output = self.feed_forward(X)
 
+        # print('output', output)
+
         # Loop over the layers backward and generate deltas + errors for each layer
         # for i in reversed(range(len(self._layers))):
         for i in range(len(self._layers) - 1, -1,-1):
@@ -195,7 +198,7 @@ class NeuralNetwork:
         
         # Gradient descent part
         for i in range(1, len(self._layers), 1):
-            self._layers[i].dW += 0.03 * self._layers[i].weights
+            # self._layers[i].dW += 0.03 * self._layers[i].weights
             self._layers[i].weights -= self._layers[i].dW * learning_rate
             self._layers[i].bias -= self._layers[i].dB * learning_rate
 
@@ -208,6 +211,8 @@ class NeuralNetwork:
         :param int max_epochs: The maximum number of epochs (cycles).
         :return: The list of calculated MSE errors.
         """
+
+        del self._layers[-1]
 
         mses = []
         cees = []
@@ -250,7 +255,7 @@ class NeuralNetwork:
         The format of the save is as following
         [layer:[activation,neurons,weights,biases]]
         """
-        n = np.vstack([[x.activation, x.n_input, x.n_neurons, x.weights, x.bias]
+        n = np.vstack([[x.activation, x.n_input, x.n_output, x.weights, x.bias]
                         for x in self._layers])
         np.save(out, n)
 
