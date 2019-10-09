@@ -56,13 +56,12 @@ b_seed = int(cfg['bias_seed'])
 nn.add_layer(Layer(n_input=X_train.shape[1]), weights_seed=w_seed, bias_seed=b_seed)
 nn.add_layer(Layer(n_input=90, activation='tanh'), weights_seed=w_seed, bias_seed=b_seed)
 nn.add_layer(Layer(n_input=90, activation='tanh'), weights_seed=w_seed, bias_seed=b_seed)
-nn.add_layer(Layer(n_input=90, activation='tanh'), weights_seed=w_seed, bias_seed=b_seed)
 nn.add_layer(Layer(n_input=y_train.shape[1], activation='softmax'), weights_seed=w_seed, bias_seed=b_seed)
 
 # Train
-mses, cees = nn.train(X_train, y_train, X_test, y_test, learning_rate=float(cfg['learning_rate']), max_epochs=int(cfg['epoch']))
+mses, cees = nn.train(X_train, y_train, X_test, y_test, learning_rate=float(cfg['learning_rate']), max_epochs=int(cfg['epoch']), mini_batch_size=int(cfg['mini_batch_size']))
 
 if (options.plot is True):
-    nn.plot(mses, cees)
+    nn.plot(mses, cees, learning_rate=float(cfg['learning_rate']), mini_batch_size=int(cfg['mini_batch_size']))
 
 nn.save()

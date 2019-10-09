@@ -2,7 +2,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-import sklearn.metrics as skmetrics
+from tqdm import tqdm
 
 class Layer:
     """
@@ -106,6 +106,9 @@ class NeuralNetwork:
 
         if (len(self._layers) == 1): return
 
+        # Load directly the layer from load
+        if (layer.weights is not None): return
+
         previous_layer = self._layers[-2]
 
         previous_layer.n_output = layer.n_input
@@ -127,8 +130,8 @@ class NeuralNetwork:
         :return: The result.
         """
         A = X.copy()
-        for layer in self._layers:
-            A = layer.activate(A)
+        for i in range(0, len(self._layers) - 1, 1):
+            A = self._layers[i].activate(A)
         return A
 
     def apply_softmax_error_derivate(self, y_predict, y):
@@ -149,7 +152,7 @@ class NeuralNetwork:
 
         # Loop over the layers backward and generate deltas + errors for each layer
         # for i in reversed(range(len(self._layers))):
-        for i in range(len(self._layers) - 1, -1,-1):
+        for i in range(len(self._layers) - 2, -1,-1):
             layer = self._layers[i]
 
             """
@@ -157,7 +160,7 @@ class NeuralNetwork:
             This error function is convinient because it's chained final derivate
             leads to a very simple formula without jacobian matrix complications
             """
-            layer.dZ = self.apply_softmax_error_derivate(y_predict, y) if i == (len(self._layers) - 1) \
+            layer.dZ = self.apply_softmax_error_derivate(y_predict, y) if i == (len(self._layers) - 2) \
                 else layer.apply_activation_derivative(layer.last_activation) * self._layers[i + 1].delta
 
             A = np.atleast_2d(X if i == 0 else self._layers[i - 1].last_activation)
@@ -168,11 +171,11 @@ class NeuralNetwork:
             layer.delta = layer.dZ.dot(layer.weights.T)
         
         # Gradient descent part
-        for i in range(0, len(self._layers), 1):
+        for i in range(0, len(self._layers) - 1, 1):
             self._layers[i].weights -= self._layers[i].dW * learning_rate
             self._layers[i].bias -= self._layers[i].dB * learning_rate
 
-    def train(self, X, y, X_test, y_test, learning_rate, max_epochs, batch_size=1):
+    def train(self, X, y, X_test, y_test, learning_rate, max_epochs, mini_batch_size=1):
         """
         Trains the neural network using backpropagation.
         :param X: The input values.
@@ -182,16 +185,15 @@ class NeuralNetwork:
         :return: The list of calculated MSE errors.
         """
 
-        del self._layers[-1]
-
         mses = []
         cees = []
-        for i in range(max_epochs):
+        for i in tqdm(range(max_epochs)):
         # i = 0
         # while True:
             i += 1
-            from_to = np.arange(0, 1, batch_size)
+            from_to = np.arange(0, 1, mini_batch_size)
             
+            # Learning part
             for j in range(0, len(from_to) - 1, 1):
                 start = int(len(X) * from_to[j])
                 end = int(len(X) * from_to[j + 1])
@@ -201,13 +203,22 @@ class NeuralNetwork:
                 end = len(X)
                 self.backpropagation(X[start:end], y[start:end], learning_rate)
 
+            # Error metrics part
             if i % 10 == 0:
-                y_predict = self.feed_forward(X_test)
-                mse = self.mean_squarred_error(y_predict, y_test)
+                y_predict_train = self.feed_forward(X)
+                y_predict_test = self.feed_forward(X_test)
+
+                mse_train = self.mean_squarred_error(y_predict_train, y)
+                cee_train = self.cross_entropy_error(y_predict_train, y)
+                
+                mse = self.mean_squarred_error(y_predict_test, y_test)
                 mses.append(mse)
-                cee = self.cross_entropy_error(y_predict, y_test)
+                cee = self.cross_entropy_error(y_predict_test, y_test)
                 cees.append(cee)
-                print('Epoch: #%s, Batches: %d, MSE: %f, CEE: %f' % (i, int(len(X) * batch_size), float(mse), float(cee)))
+                
+                tqdm.write('Epoch: #%s \
+                    MSE-train: %f CEE-train: %f \
+                    MSE-test %f CEE-test %f' % (i, float(mse_train), float(cee_train), float(mse), float(cee)))
         return mses, cees
 
     @staticmethod
@@ -227,7 +238,7 @@ class NeuralNetwork:
                         for x in self._layers])
         np.save(out, n)
 
-    def plot(self, mses, cees):
+    def plot(self, mses, cees, learning_rate, mini_batch_size):
         fig, axes = plt.subplots(nrows=2, ncols=1, figsize=(8,8))
 
         axes[0].plot(np.arange(len(mses)) * 10, mses)
@@ -237,6 +248,11 @@ class NeuralNetwork:
         axes[1].plot(np.arange(len(cees)) * 10, cees)
         axes[1].set_ylabel('CEE')
         axes[1].set_xlabel('EPOCH')
+
+        fig.suptitle(
+            'Errors metrics of unknown part of dataset mlp along epochs / Learning rate at %f / Batch size at %d%%' % (learning_rate, mini_batch_size * 100),
+            fontsize=10
+        )
 
         plt.show()
 

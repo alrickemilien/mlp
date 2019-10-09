@@ -10,8 +10,9 @@ from describe import describe_numeric_feature
 def scale(X):
     def _scaling(v, index):
         stats = describe_numeric_feature(v, index)
-        return (v - stats['min']) / (stats['max'] - stats['min'])
-        # return (v - stats['mean']) / stats['std']
+        # Different ways to scale data
+        # return (v - stats['min']) / (stats['max'] - stats['min'])
+        return (v - stats['mean']) / stats['std']
 
     # for (i, x) in enumerate(X.T):
     #     stats = describe_numeric_feature(x, i)
@@ -61,12 +62,15 @@ def preprocessing(cfg, data):
 
     data_train, data_test = split(data, float(cfg['batch_size']))
 
+    to_skip_mandatory = np.array([0, 1])
+    to_skip = np.array(cfg['to_skip'])
+
     # Define dataset of train and dataset of test
     y_train = data_train[:,1]
-    X_train = np.delete(data_train, [0, 1, 4, 5], axis=1).astype(np.float)
+    X_train = np.delete(data_train, np.r_[to_skip, to_skip_mandatory], axis=1).astype(np.float)
 
     y_test = data_test[:,1]
-    X_test = np.delete(data_test, [0, 1, 4, 5], axis=1).astype(np.float)
+    X_test = np.delete(data_test, np.r_[to_skip, to_skip_mandatory], axis=1).astype(np.float)
 
     classification = np.unique(data[:,1])
 

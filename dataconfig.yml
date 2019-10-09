@@ -3,9 +3,10 @@ header: False
 features_start_index: 2
 features_end_index: -1
 batch_size: 0.7
+mini_batch_size: 1
 shuffle_seed: 42
-bias_seed: 42
-weights_seed: 42
+bias_seed: 36
+weights_seed: 134
 epoch: 1000
 learning_rate: 0.015
-to_skip: [4, 5]
+to_skip: []

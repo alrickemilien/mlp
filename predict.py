@@ -62,7 +62,6 @@ for x in nn_load:
     activation=x[0]
     weights=x[3]
     bias=x[4]
-    print('activation', activation)
     nn.add_layer(Layer(activation=activation, weights=weights, bias=bias))
 
 y_predict = nn.feed_forward(X_test)
