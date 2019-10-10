@@ -55,6 +55,9 @@ nn_load = np.load(nn_path, allow_pickle=True)
 
 nn = NeuralNetwork()
 
+# Use all provided dataset
+cfg['batch_size'] = 1
+
 # Load data set
 _, _, X_test, y_test = preprocessing(cfg, csv2data(dataset_path))
 
@@ -67,5 +70,5 @@ for x in nn_load:
 y_predict = nn.feed_forward(X_test)
 
 print('MSE: %f' % (nn.mean_squarred_error(y_predict, y_test)))
-print('ACCURACY: %f' % (nn.accuracy(y_predict, y_test)))
 print('CEE: %f' % (nn.cross_entropy_error(y_predict, y_test)))
+print('ACCURACY: %f' % (nn.accuracy(y_predict, y_test)))

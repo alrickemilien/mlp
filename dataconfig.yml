@@ -2,11 +2,11 @@ missing_data: False
 header: False
 features_start_index: 2
 features_end_index: -1
-batch_size: 0.7
+batch_size: 0.8
 mini_batch_size: 1
-shuffle_seed: 42
-bias_seed: 36
-weights_seed: 134
+shuffle_seed: 58748
+bias_seed: 24245
+weights_seed: 91445845
 epoch: 1000
-learning_rate: 0.015
+learning_rate: 0.012
 to_skip: []
