@@ -3,7 +3,8 @@
 import sys
 import numpy as np
 
-import pandas as pd
+# for descibe numeric feature check
+# import pandas as pd
 
 from describe import describe_numeric_feature
 
