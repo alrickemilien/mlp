@@ -133,3 +133,10 @@ http://www.1-4-5.net/~dmm/ml/mse.pdf
 
 # Gradient checking
 https://machinelearningmedium.com/2018/03/29/backpropagation-implementation-and-gradient-checking/
+
+# Thanks to opandolf
+
+[Tensofrflow discover](https://www.youtube.com/watch?v=BtAVBeLuigI)
+[Interesting guy researchs](https://github.com/ageron)
+[Dropout implementation to reduce overfit](https://medium.com/@amarbudhiraja/https-medium-com-amarbudhiraja-learning-less-to-learn-better-dropout-in-deep-machine-learning-74334da4bfc5)
+[Batch normalization to reduce overfitting](https://en.wikipedia.org/wiki/Batch_normalization)
